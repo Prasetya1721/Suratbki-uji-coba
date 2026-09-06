@@ -52,12 +52,12 @@ Sebelum menjalankan project di komputer lokal, pastikan Anda telah menginstal:
 
 1. **Clone Repository GitHub**:
    ```bash
-   git clone https://github.com/Prasetya1721/Suratbki.git
+   git clone https://github.com/Prasetya1721/Suratbki-uji-coba.git
    ```
 
 2. **Masuk ke Direktori Project**:
    ```bash
-   cd Suratbki
+   cd Suratbki-uji-coba
    ```
 
 3. **Install Seluruh Dependensi**:
@@ -112,7 +112,7 @@ Aplikasi ini dibangun menggunakan **Vite + React (SPA)** dan dapat dideploy deng
 
 1. Buka [Vercel](https://vercel.com/) dan buat akun / login dengan akun GitHub Anda.
 2. Klik **"Add New..."** -> **"Project"**.
-3. Pilih repository **`Prasetya1721/Suratbki`**.
+3. Pilih repository **`Prasetya1721/Suratbki-uji-coba`**.
 4. Pengaturan build otomatis terdeteksi:
    - **Framework Preset**: `Vite`
    - **Build Command**: `npm run build`
@@ -125,7 +125,7 @@ Aplikasi ini dibangun menggunakan **Vite + React (SPA)** dan dapat dideploy deng
 
 1. Login ke [Netlify](https://www.netlify.com/).
 2. Klik **"Add new site"** -> **"Import an existing project"**.
-3. Hubungkan ke GitHub dan pilih **`Prasetya1721/Suratbki`**.
+3. Hubungkan ke GitHub dan pilih **`Prasetya1721/Suratbki-uji-coba`**.
 4. Masukkan konfigurasi berikut:
    - **Build command**: `npm run build`
    - **Publish directory**: `dist`
