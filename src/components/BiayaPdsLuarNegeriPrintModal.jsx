@@ -122,52 +122,112 @@ export const BiayaPdsLuarNegeriPrintModal = ({
   };
 
   // Ekspor Excel Sesuai Persis dengan Gambar Spesimen
+  // Ekspor Excel Sesuai Persis dengan Format & Spesimen Resmi (Rapi & Tidak Terpotong)
   const handleExportExcel = async () => {
     try {
       const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'BKI Cabang Pontianak';
+      workbook.created = new Date();
+
       const worksheet = workbook.addWorksheet('PDS Luar Negeri', {
-        pageSetup: { orientation: 'landscape', paperSize: 9 }
+        views: [{ showGridLines: true }],
+        pageSetup: {
+          orientation: 'landscape',
+          paperSize: 9, // A4
+          fitToPage: true,
+          fitToWidth: 1,
+          fitToHeight: 0,
+          margins: {
+            left: 0.35, right: 0.35, top: 0.4, bottom: 0.4,
+            header: 0.2, footer: 0.2
+          }
+        }
       });
 
-      // Set lebar kolom
+      // Set lebar kolom yang proporsional & cukup luas agar tidak ada teks terpotong
       worksheet.columns = [
-        { key: 'col1', width: 5 },   // NO
-        { key: 'col2', width: 22 },  // NAMA
-        { key: 'col3', width: 5 },   // HR
-        { key: 'col4', width: 5 },   // MLM
-        { key: 'col5', width: 6 },   // HR LBR
-        { key: 'col6', width: 14 },  // TGL BERANGKAT
-        { key: 'col7', width: 14 },  // TGL KEMBALI
-        { key: 'col8', width: 15 },  // TIKET PESAWAT
-        { key: 'col9', width: 14 },  // ASAL TUJUAN DLM
-        { key: 'col10', width: 14 }, // ASAL TUJUAN LUAR
-        { key: 'col11', width: 10 }, // U.HR 11
-        { key: 'col12', width: 12 }, // TOTAL U.HR 12
-        { key: 'col13', width: 10 }, // HOTEL 13
-        { key: 'col14', width: 12 }, // TOTAL HOTEL 14
-        { key: 'col15', width: 12 }, // HR LBR 15
-        { key: 'col16', width: 11 }, // PAKAIAN DINGIN 16
-        { key: 'col17', width: 14 }, // JUMLAH USD 17
-        { key: 'col18', width: 16 }, // JUMLAH TERIMA 18
-        { key: 'col19', width: 16 }  // TANDA TERIMA 19
+        { key: 'col1', width: 7 },    // A: NO
+        { key: 'col2', width: 28 },   // B: NAMA SURVEYOR
+        { key: 'col3', width: 6 },    // C: HR
+        { key: 'col4', width: 6 },    // D: MLM
+        { key: 'col5', width: 8 },    // E: HR LBR
+        { key: 'col6', width: 18 },   // F: TGL BERANGKAT
+        { key: 'col7', width: 18 },   // G: TGL KEMBALI
+        { key: 'col8', width: 16 },   // H: TIKET PESAWAT
+        { key: 'col9', width: 16 },   // I: ASAL TUJUAN DLM
+        { key: 'col10', width: 16 },  // J: ASAL TUJUAN LUAR
+        { key: 'col11', width: 11 },  // K: U.HR 11
+        { key: 'col12', width: 14 },  // L: TOTAL U.HR 12
+        { key: 'col13', width: 11 },  // M: HOTEL 13
+        { key: 'col14', width: 14 },  // N: TOTAL HOTEL 14
+        { key: 'col15', width: 14 },  // O: HR LBR 15
+        { key: 'col16', width: 12 },  // P: PAKAIAN DINGIN 16
+        { key: 'col17', width: 16 },  // Q: JUMLAH USD 17
+        { key: 'col18', width: 18 },  // R: JUMLAH TERIMA 18
+        { key: 'col19', width: 16 }   // S: TANDA TERIMA 19
       ];
 
-      // Header Lampiran Surat Tugas (Rows 1-5)
-      worksheet.addRow([`LAMPIRAN SURAT TUGAS No. ${nomorPrefix || 'A 0'}    ${nomorSuffix}`, '', '', '', '', tglMulaiStr]);
-      worksheet.addRow([`DAFTAR BIAYA PERJALANAN DINAS KE`, ':', negaraTujuan]);
-      worksheet.addRow([`DALAM RANGKA SURVEY KLAS`, ':', namaKapal]);
-      worksheet.addRow([`SESUAI DAFTAR DAN KUITANSI TERLAMPIR`]);
-      worksheet.addRow([]);
+      // ====== 1. HEADER DOKUMEN (Rows 1-4) ======
+      // Row 1: Judul Lampiran & Tanggal Mulai
+      const r1 = worksheet.addRow([]);
+      r1.height = 20;
+      r1.getCell(1).value = `LAMPIRAN SURAT TUGAS No. ${nomorPrefix || 'A 0'}    ${nomorSuffix}`;
+      r1.getCell(1).font = { name: 'Calibri', size: 10, bold: true };
+      r1.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
+      worksheet.mergeCells(`A${r1.number}:E${r1.number}`);
 
-      worksheet.getCell('A1').font = { name: 'Calibri', size: 10, bold: true };
-      worksheet.getCell('F1').font = { name: 'Calibri', size: 10, bold: true };
-      worksheet.getCell('A2').font = { name: 'Calibri', size: 10, bold: true };
-      worksheet.getCell('C2').font = { name: 'Calibri', size: 10, bold: true };
-      worksheet.getCell('A3').font = { name: 'Calibri', size: 10, bold: true };
-      worksheet.getCell('C3').font = { name: 'Calibri', size: 10, bold: true };
-      worksheet.getCell('A4').font = { name: 'Calibri', size: 10, bold: true };
+      r1.getCell(6).value = tglMulaiStr;
+      r1.getCell(6).font = { name: 'Calibri', size: 10, bold: true };
+      r1.getCell(6).alignment = { vertical: 'middle', horizontal: 'left' };
+      worksheet.mergeCells(`F${r1.number}:H${r1.number}`);
 
-      // Header Table (Row 6 & 7)
+      // Row 2: DAFTAR BIAYA PERJALANAN DINAS KE : [NEGARA]
+      const r2 = worksheet.addRow([]);
+      r2.height = 19;
+      r2.getCell(1).value = 'DAFTAR BIAYA PERJALANAN DINAS KE';
+      r2.getCell(1).font = { name: 'Calibri', size: 10, bold: true };
+      r2.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
+      worksheet.mergeCells(`A${r2.number}:B${r2.number}`);
+
+      r2.getCell(3).value = ':';
+      r2.getCell(3).font = { name: 'Calibri', size: 10, bold: true };
+      r2.getCell(3).alignment = { vertical: 'middle', horizontal: 'center' };
+
+      r2.getCell(4).value = negaraTujuan;
+      r2.getCell(4).font = { name: 'Calibri', size: 10, bold: true };
+      r2.getCell(4).alignment = { vertical: 'middle', horizontal: 'left' };
+      worksheet.mergeCells(`D${r2.number}:H${r2.number}`);
+
+      // Row 3: DALAM RANGKA SURVEY KLAS : [KAPAL]
+      const r3 = worksheet.addRow([]);
+      r3.height = 19;
+      r3.getCell(1).value = 'DALAM RANGKA SURVEY KLAS';
+      r3.getCell(1).font = { name: 'Calibri', size: 10, bold: true };
+      r3.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
+      worksheet.mergeCells(`A${r3.number}:B${r3.number}`);
+
+      r3.getCell(3).value = ':';
+      r3.getCell(3).font = { name: 'Calibri', size: 10, bold: true };
+      r3.getCell(3).alignment = { vertical: 'middle', horizontal: 'center' };
+
+      r3.getCell(4).value = namaKapal;
+      r3.getCell(4).font = { name: 'Calibri', size: 10, bold: true };
+      r3.getCell(4).alignment = { vertical: 'middle', horizontal: 'left' };
+      worksheet.mergeCells(`D${r3.number}:H${r3.number}`);
+
+      // Row 4: SESUAI DAFTAR DAN KUITANSI TERLAMPIR
+      const r4 = worksheet.addRow([]);
+      r4.height = 19;
+      r4.getCell(1).value = 'SESUAI DAFTAR DAN KUITANSI TERLAMPIR';
+      r4.getCell(1).font = { name: 'Calibri', size: 10, bold: true };
+      r4.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
+      worksheet.mergeCells(`A${r4.number}:H${r4.number}`);
+
+      // Row 5: Spacing Row
+      const r5 = worksheet.addRow([]);
+      r5.height = 10;
+
+      // ====== 2. HEADER TABEL UTAMA (Rows 6, 7, 8) ======
       const h1 = worksheet.addRow([
         'NO.',
         'NAMA',
@@ -182,6 +242,7 @@ export const BiayaPdsLuarNegeriPrintModal = ({
         'JUMLAH TERIMA',
         'TANDA TERIMA'
       ]);
+      h1.height = 26;
 
       const h2 = worksheet.addRow([
         '', '',
@@ -192,40 +253,55 @@ export const BiayaPdsLuarNegeriPrintModal = ({
         '13', '14=13*4',
         '', '', '', '', ''
       ]);
+      h2.height = 26;
 
-      // Row 8: Formula Index Numbers
+      // Row 8: Formula Index Numbers (gunakan integer agar tidak muncul peringatan "Number stored as text")
       const h3 = worksheet.addRow([
-        '1', '2', '3', '4', '5', '6', '7',
-        '8', '9', '10', '11', '12=11*3', '13', '14=13*4',
-        '15=5*11/50%', '16', '17=8+10+12+14+15+16', '18=16', '19'
+        1, 2, 3, 4, 5, 6, 7,
+        8, 9, 10, 11, '12=11*3', 13, '14=13*4',
+        '15=5*11/50%', 16, '17=8+10+12+14+15+16', '18=16', 19
       ]);
+      h3.height = 19;
 
       // Merge header cells
-      worksheet.mergeCells('A6:A7');
-      worksheet.mergeCells('B6:B7');
-      worksheet.mergeCells('C6:E6');
-      worksheet.mergeCells('F6:G6');
-      worksheet.mergeCells('H6:J6');
-      worksheet.mergeCells('K6:L6');
-      worksheet.mergeCells('M6:N6');
-      worksheet.mergeCells('O6:O7');
-      worksheet.mergeCells('P6:P7');
-      worksheet.mergeCells('Q6:Q7');
-      worksheet.mergeCells('R6:R7');
-      worksheet.mergeCells('S6:S7');
+      worksheet.mergeCells(`A${h1.number}:A${h2.number}`);
+      worksheet.mergeCells(`B${h1.number}:B${h2.number}`);
+      worksheet.mergeCells(`C${h1.number}:E${h1.number}`);
+      worksheet.mergeCells(`F${h1.number}:G${h1.number}`);
+      worksheet.mergeCells(`H${h1.number}:J${h1.number}`);
+      worksheet.mergeCells(`K${h1.number}:L${h1.number}`);
+      worksheet.mergeCells(`M${h1.number}:N${h1.number}`);
+      worksheet.mergeCells(`O${h1.number}:O${h2.number}`);
+      worksheet.mergeCells(`P${h1.number}:P${h2.number}`);
+      worksheet.mergeCells(`Q${h1.number}:Q${h2.number}`);
+      worksheet.mergeCells(`R${h1.number}:R${h2.number}`);
+      worksheet.mergeCells(`S${h1.number}:S${h2.number}`);
 
-      [h1, h2, h3].forEach((row) => {
+      const thinBorder = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+
+      [h1, h2].forEach((row) => {
         row.eachCell({ includeEmpty: true }, (cell) => {
           cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
           cell.font = { name: 'Calibri', size: 9, bold: true };
-          cell.border = {
-            top: { style: 'thin' }, left: { style: 'thin' },
-            bottom: { style: 'thin' }, right: { style: 'thin' }
-          };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+          cell.border = thinBorder;
         });
       });
 
-      // Row 9: Data Luar Negeri
+      h3.eachCell({ includeEmpty: true }, (cell) => {
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.font = { name: 'Calibri', size: 8, italic: true, bold: true };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+        cell.border = thinBorder;
+      });
+
+      // ====== 3. DATA ROWS (Rows 9, 10, 11) ======
+      // Row 9: Data Komponen Luar Negeri (USD)
       const rowLN = worksheet.addRow([
         1,
         namaSurveyor,
@@ -247,109 +323,247 @@ export const BiayaPdsLuarNegeriPrintModal = ({
         grandTotalIdr,
         ''
       ]);
+      rowLN.height = 24;
 
-      // Row 10: Banner DALAM NEGERI
-      const rowBanner = worksheet.addRow([
-        '', '', '', '', '', '', '',
-        'DALAM NEGERI', '', '', '', '', '', '', '', '', '', '', ''
-      ]);
-      worksheet.mergeCells(`H10:Q10`);
-      worksheet.mergeCells(`R9:R11`); // Merge Jumlah Terima across data rows
-      worksheet.mergeCells(`A9:A11`); // Merge No
-      worksheet.mergeCells(`B9:B11`); // Merge Nama
-      worksheet.mergeCells(`S9:S11`); // Merge Tanda Terima
+      // Row 10: Banner DALAM NEGERI (Hijau Penuh Kolom C sampai Q)
+      const rowBanner = worksheet.addRow([]);
+      rowBanner.height = 20;
+      rowBanner.getCell(3).value = 'DALAM NEGERI';
 
-      // Row 11: Data Transit Dalam Negeri
+      // Row 11: Data Transit Dalam Negeri (IDR)
       const rowDN = worksheet.addRow([
-        '', '', '', '', '',
+        '', '',
+        '-', '-', '-',
         tglTransitMulaiStr,
         tglTransitSelesaiStr,
         tiketDlmIdr > 0 ? tiketDlmIdr : '-',
         asalTujuanDlmIdr,
         '-',
         '-', '-', '-', '-', '-', '-',
-        asalTujuanDlmIdr + tiketDlmIdr,
+        totalTransitIdr,
         '', ''
       ]);
+      rowDN.height = 24;
 
-      [rowLN, rowBanner, rowDN].forEach((row) => {
-        row.eachCell({ includeEmpty: true }, (cell) => {
-          cell.border = {
-            top: { style: 'thin' }, left: { style: 'thin' },
-            bottom: { style: 'thin' }, right: { style: 'thin' }
-          };
-          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      // Merging data rows persis seperti dokumen cetak fisik
+      worksheet.mergeCells(`A${rowLN.number}:A${rowDN.number}`); // No. (1)
+      worksheet.mergeCells(`B${rowLN.number}:B${rowDN.number}`); // Nama Surveyor
+      worksheet.mergeCells(`C${rowBanner.number}:Q${rowBanner.number}`); // Banner hijau DALAM NEGERI sepanjang kolom C-Q
+      worksheet.mergeCells(`R${rowLN.number}:R${rowDN.number}`); // Grand Total Terima
+      worksheet.mergeCells(`S${rowLN.number}:S${rowDN.number}`); // Tanda Terima
+
+      // Berikan style, font, dan border pada semua cell data
+      for (let r = rowLN.number; r <= rowDN.number; r++) {
+        const rowObj = worksheet.getRow(r);
+        for (let c = 1; c <= 19; c++) {
+          const cell = rowObj.getCell(c);
+          cell.border = thinBorder;
           cell.font = { name: 'Calibri', size: 9 };
-        });
-      });
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        }
+      }
 
-      // Style khusus baris banner hijau
-      const bannerCell = worksheet.getCell('H10');
-      bannerCell.fill = {
+      // Format khusus banner DALAM NEGERI
+      const cellBanner = worksheet.getCell(`C${rowBanner.number}`);
+      cellBanner.fill = {
         type: 'pattern',
         pattern: 'solid',
         fgColor: { argb: 'FF98C044' }
       };
-      bannerCell.font = { name: 'Calibri', size: 10, bold: true };
-      bannerCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cellBanner.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
+      cellBanner.alignment = { horizontal: 'center', vertical: 'middle' };
 
-      // Number formats
+      // Number formatting & font bold
+      rowLN.getCell(2).font = { name: 'Calibri', size: 9, bold: true };
       rowLN.getCell(11).numFmt = '$#,##0';
       rowLN.getCell(12).numFmt = '$#,##0';
       rowLN.getCell(17).numFmt = '$#,##0';
-      rowLN.getCell(18).numFmt = '#,##0';
-      rowLN.getCell(18).font = { name: 'Calibri', size: 10, bold: true };
+      rowLN.getCell(17).font = { name: 'Calibri', size: 9.5, bold: true };
+
+      const grandCell = worksheet.getCell(`R${rowLN.number}`);
+      grandCell.numFmt = '#,##0';
+      grandCell.font = { name: 'Calibri', size: 10, bold: true };
+      grandCell.alignment = { horizontal: 'right', vertical: 'middle' };
 
       rowDN.getCell(9).numFmt = '#,##0';
+      rowDN.getCell(9).alignment = { horizontal: 'right', vertical: 'middle' };
       rowDN.getCell(17).numFmt = '#,##0';
+      rowDN.getCell(17).font = { name: 'Calibri', size: 9.5, bold: true };
+      rowDN.getCell(17).alignment = { horizontal: 'right', vertical: 'middle' };
 
-      // Footer: Keterangan & Breakdown Konversi
-      worksheet.addRow([]);
-      const f1 = worksheet.addRow(['KET :', keteranganKhusus, '', '', '', '', '', '', '', 'USD', `$${totalUsd}`]);
-      f1.getCell(10).font = { name: 'Calibri', size: 9, bold: true };
-      f1.getCell(11).font = { name: 'Calibri', size: 9, bold: true };
+      // ====== 4. FOOTER: KETERANGAN & BREAKDOWN KURS ======
+      const rSpacing = worksheet.addRow([]);
+      rSpacing.height = 12;
 
-      const f2 = worksheet.addRow(['', '', '', '', '', '', '', '', '', 'KURS', kurs]);
-      f2.getCell(10).font = { name: 'Calibri', size: 9, bold: true };
-      f2.getCell(11).font = { name: 'Calibri', size: 9, bold: true };
-      f2.getCell(11).numFmt = '#,##0';
+      // Row f1: KET & USD
+      const f1 = worksheet.addRow([]);
+      f1.height = 20;
+      f1.getCell(1).value = 'KET :';
+      f1.getCell(1).font = { name: 'Calibri', size: 9, bold: true };
+      f1.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
 
-      const f3 = worksheet.addRow(['', '', '', '', '', '', '', '', '', '', konversiUsdKeIdr]);
-      f3.getCell(11).font = { name: 'Calibri', size: 9, bold: true };
-      f3.getCell(11).numFmt = '#,##0';
+      f1.getCell(2).value = keteranganKhusus;
+      f1.getCell(2).font = { name: 'Calibri', size: 9, bold: true };
+      f1.getCell(2).alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+      worksheet.mergeCells(`B${f1.number}:L${f1.number}`);
 
-      const f4 = worksheet.addRow(['', '', '', '', '', '', '', 'Jumlah', '', '', 'Rp', grandTotalIdr]);
-      worksheet.mergeCells(`H${worksheet.rowCount}:J${worksheet.rowCount}`);
-      const jCell = worksheet.getCell(`H${worksheet.rowCount}`);
-      jCell.font = { name: 'Calibri', size: 11, bold: true };
-      jCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      f1.getCell(13).value = 'USD :';
+      f1.getCell(13).font = { name: 'Calibri', size: 9.5, bold: true };
+      f1.getCell(13).alignment = { vertical: 'middle', horizontal: 'right' };
+      worksheet.mergeCells(`M${f1.number}:N${f1.number}`);
 
-      const totCell = worksheet.getCell(`L${worksheet.rowCount}`);
-      totCell.font = { name: 'Calibri', size: 11, bold: true };
-      totCell.numFmt = '#,##0.00';
+      f1.getCell(15).value = totalUsd;
+      f1.getCell(15).font = { name: 'Calibri', size: 9.5, bold: true };
+      f1.getCell(15).numFmt = '$#,##0';
+      f1.getCell(15).alignment = { vertical: 'middle', horizontal: 'right' };
+      worksheet.mergeCells(`O${f1.number}:R${f1.number}`);
 
-      // Tanda Tangan
-      worksheet.addRow([]);
-      worksheet.addRow([]);
-      const s1 = worksheet.addRow(['', 'Mengetahui', '', '', '', '', '', '', '', '', '', '', '', '', '', `PONTIANAK, ${tglMulaiStr}`]);
-      const s2 = worksheet.addRow(['', 'Kepala Cabang Madya Klas Pontianak', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Pembuat Daftar']);
-      s1.getCell(2).font = { name: 'Calibri', size: 9, bold: true };
-      s1.getCell(16).font = { name: 'Calibri', size: 9, bold: true };
-      s2.getCell(2).font = { name: 'Calibri', size: 9, bold: true };
-      s2.getCell(16).font = { name: 'Calibri', size: 9, bold: true };
+      // Row f2: KURS : [NILAI KURS]
+      const f2 = worksheet.addRow([]);
+      f2.height = 20;
+      f2.getCell(13).value = 'KURS :';
+      f2.getCell(13).font = { name: 'Calibri', size: 9.5, bold: true };
+      f2.getCell(13).alignment = { vertical: 'middle', horizontal: 'right' };
+      worksheet.mergeCells(`M${f2.number}:N${f2.number}`);
 
-      worksheet.addRow([]);
-      worksheet.addRow([]);
-      worksheet.addRow([]);
+      f2.getCell(15).value = kurs;
+      f2.getCell(15).font = { name: 'Calibri', size: 9.5, bold: true };
+      f2.getCell(15).numFmt = '#,##0';
+      f2.getCell(15).alignment = { vertical: 'middle', horizontal: 'right' };
+      worksheet.mergeCells(`O${f2.number}:R${f2.number}`);
 
-      const s3 = worksheet.addRow(['', kepalaCabang, '', '', '', '', '', '', '', '', '', '', '', '', '', pembuatName]);
+      // Row f3: Hasil Konversi USD ke IDR (dengan garis bawah pembatas)
+      const f3 = worksheet.addRow([]);
+      f3.height = 20;
+      f3.getCell(15).value = konversiUsdKeIdr;
+      f3.getCell(15).font = { name: 'Calibri', size: 9.5, bold: true };
+      f3.getCell(15).numFmt = '#,##0';
+      f3.getCell(15).alignment = { vertical: 'middle', horizontal: 'right' };
+      f3.getCell(15).border = { bottom: { style: 'thin' } };
+      worksheet.mergeCells(`O${f3.number}:R${f3.number}`);
+
+      // Row f4: Jumlah Rp [GRAND TOTAL IDR]
+      const f4 = worksheet.addRow([]);
+      f4.height = 24;
+      f4.getCell(12).value = 'Jumlah';
+      f4.getCell(12).font = { name: 'Calibri', size: 11, bold: true };
+      f4.getCell(12).alignment = { vertical: 'middle', horizontal: 'right' };
+      worksheet.mergeCells(`L${f4.number}:M${f4.number}`);
+
+      f4.getCell(14).value = 'Rp';
+      f4.getCell(14).font = { name: 'Calibri', size: 11, bold: true };
+      f4.getCell(14).alignment = { vertical: 'middle', horizontal: 'center' };
+
+      f4.getCell(15).value = grandTotalIdr;
+      f4.getCell(15).font = { name: 'Calibri', size: 11, bold: true };
+      f4.getCell(15).numFmt = '#,##0.00';
+      f4.getCell(15).alignment = { vertical: 'middle', horizontal: 'right' };
+      worksheet.mergeCells(`O${f4.number}:R${f4.number}`);
+
+      // ====== 5. TANDA TANGAN ======
+      const rSigSpacing = worksheet.addRow([]);
+      rSigSpacing.height = 16;
+
+      // Row s1: Header Jabatan
+      const s1 = worksheet.addRow([]);
+      s1.height = 20;
+      s1.getCell(2).value = 'Mengetahui';
+      s1.getCell(2).font = { name: 'Calibri', size: 9.5, bold: true };
+      s1.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.mergeCells(`B${s1.number}:F${s1.number}`);
+
+      s1.getCell(13).value = `PONTIANAK, ${tglMulaiStr}`;
+      s1.getCell(13).font = { name: 'Calibri', size: 9.5, bold: true };
+      s1.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.mergeCells(`M${s1.number}:R${s1.number}`);
+
+      // Row s2: Deskripsi Jabatan
+      const s2 = worksheet.addRow([]);
+      s2.height = 20;
+      s2.getCell(2).value = 'Kepala Cabang Madya Klas Pontianak';
+      s2.getCell(2).font = { name: 'Calibri', size: 9.5, bold: true };
+      s2.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.mergeCells(`B${s2.number}:F${s2.number}`);
+
+      s2.getCell(13).value = 'Pembuat Daftar';
+      s2.getCell(13).font = { name: 'Calibri', size: 9.5, bold: true };
+      s2.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.mergeCells(`M${s2.number}:R${s2.number}`);
+
+      // Rows gap: Ruang Tanda Tangan
+      for (let i = 0; i < 3; i++) {
+        const gap = worksheet.addRow([]);
+        gap.height = 18;
+      }
+
+      // Row s3: Nama Penandatangan
+      const s3 = worksheet.addRow([]);
+      s3.height = 20;
+      s3.getCell(2).value = kepalaCabang;
       s3.getCell(2).font = { name: 'Calibri', size: 10, bold: true, underline: true };
-      s3.getCell(16).font = { name: 'Calibri', size: 10, bold: true, underline: true };
+      s3.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.mergeCells(`B${s3.number}:F${s3.number}`);
 
-      const s4 = worksheet.addRow(['', `NUP.${nup}`, '', '', '', '', '', '', '', '', '', '', '', '', '', `NUP.${pembuatDesc.replace('NUP.', '')}`]);
+      s3.getCell(13).value = pembuatName;
+      s3.getCell(13).font = { name: 'Calibri', size: 10, bold: true, underline: true };
+      s3.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.mergeCells(`M${s3.number}:R${s3.number}`);
+
+      // Row s4: NUP
+      const s4 = worksheet.addRow([]);
+      s4.height = 18;
+      s4.getCell(2).value = `NUP.${nup}`;
       s4.getCell(2).font = { name: 'Calibri', size: 9 };
-      s4.getCell(16).font = { name: 'Calibri', size: 9 };
+      s4.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.mergeCells(`B${s4.number}:F${s4.number}`);
 
+      s4.getCell(13).value = `NUP.${pembuatDesc.replace(/^NUP\.?\s*/i, '')}`;
+      s4.getCell(13).font = { name: 'Calibri', size: 9 };
+      s4.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.mergeCells(`M${s4.number}:R${s4.number}`);
+
+      // Opsional: Sematkan gambar TTD jika checkbox tanda tangan aktif
+      if (withSignature) {
+        try {
+          if (kacabSignature && isValidSignature(kacabSignature)) {
+            const resp = await fetch(kacabSignature);
+            if (resp.ok) {
+              const buffer = await resp.arrayBuffer();
+              const imageId = workbook.addImage({
+                buffer: buffer,
+                extension: 'png'
+              });
+              worksheet.addImage(imageId, {
+                tl: { col: 2.2, row: s2.number + 0.1 },
+                ext: { width: 140, height: 50 }
+              });
+            }
+          }
+        } catch (errSig) {
+          console.warn('Excel kacab signature embed fallback:', errSig);
+        }
+
+        try {
+          if (pembuatSignature && isValidSignature(pembuatSignature)) {
+            const resp = await fetch(pembuatSignature);
+            if (resp.ok) {
+              const buffer = await resp.arrayBuffer();
+              const imageId = workbook.addImage({
+                buffer: buffer,
+                extension: 'png'
+              });
+              worksheet.addImage(imageId, {
+                tl: { col: 13.8, row: s2.number + 0.1 },
+                ext: { width: 140, height: 50 }
+              });
+            }
+          }
+        } catch (errSig) {
+          console.warn('Excel pembuat signature embed fallback:', errSig);
+        }
+      }
+
+      // Render dan download
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = window.URL.createObjectURL(blob);
