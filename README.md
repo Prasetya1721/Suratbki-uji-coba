@@ -112,7 +112,7 @@ Aplikasi ini dibangun menggunakan **Vite + React (SPA)** dan dapat dideploy deng
 
 1. Buka [Vercel](https://vercel.com/) dan buat akun / login dengan akun GitHub Anda.
 2. Klik **"Add New..."** -> **"Project"**.
-3. Pilih repository **`Prasetya1721/Suratbki`**.
+3. Pilih repository **`Prasetya1721/Suratbki-uji-coba`**.
 4. Pengaturan build otomatis terdeteksi:
    - **Framework Preset**: `Vite`
    - **Build Command**: `npm run build`
