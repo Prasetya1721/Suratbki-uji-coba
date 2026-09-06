@@ -422,6 +422,23 @@ export const BiayaPdsLuarNegeriPrintModal = ({
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.78rem',
+                  padding: '0.32rem 0.6rem',
+                  background: '#f0f9ff',
+                  color: '#0369a1',
+                  border: '1px solid #bae6fd',
+                  borderRadius: '6px',
+                  fontWeight: 700
+                }}
+              >
+                <span>📐 A4 Landscape</span>
+              </div>
+
               <label
                 style={{
                   display: 'flex',
@@ -781,6 +798,114 @@ export const BiayaPdsLuarNegeriPrintModal = ({
               </div>
             </div>
           </div>
+
+          {/* Print Style Khusus A4 Landscape */}
+          <style>{`
+            @media screen {
+              .print-only-modal-overlay {
+                display: flex !important;
+              }
+            }
+
+            @media print {
+              @page { 
+                size: A4 landscape !important; 
+                margin: 8mm 10mm 8mm 10mm !important; 
+              }
+
+              * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+
+              html, body { 
+                background: #ffffff !important; 
+                color: #000000 !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+              }
+
+              /* Sembunyikan elemen background web & toolbar modal */
+              #root,
+              .app-container-v2,
+              .sidebar,
+              .sidebar-container,
+              .app-header,
+              .header-v2,
+              .no-print,
+              .guidance-banner,
+              .modal-header,
+              .modal-footer { 
+                display: none !important; 
+              }
+
+              .modal-overlay.print-only-modal-overlay { 
+                position: static !important; 
+                display: block !important;
+                background: transparent !important; 
+                padding: 0 !important; 
+                margin: 0 !important;
+                width: 100% !important;
+                border: none !important;
+                box-shadow: none !important;
+              }
+
+              .modal-content { 
+                position: static !important;
+                display: block !important;
+                max-width: 100% !important; 
+                width: 100% !important; 
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important; 
+                box-shadow: none !important; 
+                background: transparent !important;
+              }
+
+              .modal-body { 
+                display: block !important;
+                padding: 0 !important; 
+                margin: 0 !important;
+                background: transparent !important;
+                overflow: visible !important; 
+                width: 100% !important;
+              }
+
+              .printable-sheet-wrapper { 
+                display: block !important; 
+                width: 100% !important; 
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: visible !important; 
+              }
+
+              .printable-sheet { 
+                display: block !important;
+                padding: 0 !important; 
+                width: 100% !important; 
+                max-width: 100% !important;
+                min-width: 0 !important; 
+                zoom: 1 !important; 
+                transform: none !important; 
+                box-shadow: none !important; 
+                border: none !important; 
+                margin: 0 auto !important;
+                box-sizing: border-box !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+              }
+
+              table {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+              }
+            }
+          `}</style>
         </div>
       </div>
     </ModalPortal>
