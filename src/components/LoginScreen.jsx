@@ -398,6 +398,20 @@ export const LoginScreen = () => {
               >
                 ⚓ Surveyor (Bone)
               </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: '0.72rem', padding: '0.35rem 0.5rem', justifyContent: 'flex-start', fontWeight: 700, color: '#b45309', borderColor: '#fde68a', background: '#fffbeb' }}
+                onClick={() => {
+                  resetLoginAttempts();
+                  setLockCountdown(0);
+                  setFailedAttempts(0);
+                  setErrorMessage('');
+                  login('finance', 'password123');
+                }}
+              >
+                💰 Keuangan (Fitrian)
+              </button>
             </div>
           </div>
 

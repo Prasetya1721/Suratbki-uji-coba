@@ -34,12 +34,14 @@ export const INITIAL_USERS = [
     username: 'renza',
     password: 'password123',
     name: 'RENZA MUHARAM',
+    nup: '50382-KI',
     email: 'renza@gmail.com',
     phone: '+620000000001',
     role: 'admin',
     grade: 'GRADE 7C',
     roleLabel: 'Admin BKI',
     avatarBg: '#1e3a8a',
+    signatureUrl: '/signatures/pembuat_renza_signature.png',
     description: 'Admin Utama BKI Pontianak'
   },
   {
@@ -141,13 +143,15 @@ export const INITIAL_USERS = [
     id: 'usr-finance',
     username: 'finance',
     password: 'password123',
-    name: 'ANONIM',
+    name: 'Fitrian A,Md',
+    nup: '',
     email: 'finance@gmail.com',
     phone: '+620000000008',
     role: 'keuangan',
     grade: 'GRADE 5 C',
     roleLabel: 'Keuangan',
     avatarBg: '#f59e0b',
+    signatureUrl: '',
     description: 'Staff Keuangan BKI'
   }
 ];
@@ -155,15 +159,43 @@ export const INITIAL_USERS = [
 export const AuthProvider = ({ children }) => {
   const [usersList, setUsersList] = useState(() => {
     const saved = localStorage.getItem('st_users_list');
-    return saved ? JSON.parse(saved) : INITIAL_USERS;
+    if (!saved) return INITIAL_USERS;
+    try {
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed)
+        ? parsed.map((u) => {
+            if (u.username === 'finance' || u.role === 'keuangan' || u.id === 'usr-finance') {
+              return { ...u, name: 'Fitrian A,Md', nup: u.nup === '50382-KI' ? '' : (u.nup || ''), signatureUrl: (u.signatureUrl && !u.signatureUrl.includes('pembuat_renza')) ? u.signatureUrl : '' };
+            }
+            if (u.username === 'renza' || u.id === 'usr-renza') {
+              return { ...u, nup: '50382-KI', signatureUrl: u.signatureUrl || '/signatures/pembuat_renza_signature.png' };
+            }
+            return u;
+          })
+        : INITIAL_USERS;
+    } catch (e) {
+      return INITIAL_USERS;
+    }
   });
 
 
   useEffect(() => {
-    const isReset = localStorage.getItem('st_users_reset_v6');
+    const isReset = localStorage.getItem('st_users_reset_v10');
     if (!isReset) {
-      setUsersList(INITIAL_USERS);
-      localStorage.setItem('st_users_reset_v6', 'true');
+      setUsersList((prev) => {
+        const updated = (prev || []).map((u) => {
+          if (u.username === 'renza' || u.id === 'usr-renza') {
+            return { ...u, nup: '50382-KI', signatureUrl: u.signatureUrl || '/signatures/pembuat_renza_signature.png' };
+          }
+          if (u.username === 'finance' || u.role === 'keuangan' || u.id === 'usr-finance') {
+            return { ...u, name: 'Fitrian A,Md', nup: '', signatureUrl: '' };
+          }
+          return u;
+        });
+        localStorage.setItem('st_users_list', JSON.stringify(updated));
+        return updated;
+      });
+      localStorage.setItem('st_users_reset_v10', 'true');
     }
   }, []);
 
@@ -178,7 +210,25 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
 
-    return JSON.parse(savedUser);
+    try {
+      const u = JSON.parse(savedUser);
+      if (u && (u.username === 'finance' || u.role === 'keuangan' || u.id === 'usr-finance')) {
+        u.name = 'Fitrian A,Md';
+        if (u.nup === '50382-KI') {
+          u.nup = '';
+        }
+        if (u.signatureUrl && u.signatureUrl.includes('pembuat_renza')) {
+          u.signatureUrl = '';
+        }
+      }
+      if (u && (u.username === 'renza' || u.id === 'usr-renza')) {
+        u.nup = '50382-KI';
+        u.signatureUrl = u.signatureUrl || '/signatures/pembuat_renza_signature.png';
+      }
+      return u;
+    } catch (e) {
+      return null;
+    }
   });
 
   const [passwordsMigrated, setPasswordsMigrated] = useState(false);

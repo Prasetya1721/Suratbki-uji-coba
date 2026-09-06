@@ -34,6 +34,8 @@ export const BukuAgendaNotaDebitView = ({ onOpenCreate, onOpenEdit, onOpenPrint 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedYear, setSelectedYear] = useState('ALL');
   const [selectedMonth, setSelectedMonth] = useState('ALL');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [isPrintRegisterOpen, setIsPrintRegisterOpen] = useState(false);
 
   // Available Years
@@ -68,21 +70,56 @@ export const BukuAgendaNotaDebitView = ({ onOpenCreate, onOpenEdit, onOpenPrint 
         }
       }
 
-      // 2. Year filter
-      if (selectedYear !== 'ALL') {
-        const y = item.tanggalSurat ? new Date(item.tanggalSurat).getFullYear() : null;
-        if (String(y) !== String(selectedYear)) return false;
-      }
+      // 2. Filter Multi Hari / Rentang Tanggal (YYYY-MM-DD)
+      if (startDate || endDate) {
+        const itemDate = item.tanggalSurat ? String(item.tanggalSurat).split('T')[0] : '';
+        if (startDate && (!itemDate || itemDate < startDate)) return false;
+        if (endDate && (!itemDate || itemDate > endDate)) return false;
+      } else {
+        // 3. Year filter
+        if (selectedYear !== 'ALL') {
+          const y = item.tanggalSurat ? new Date(item.tanggalSurat).getFullYear() : null;
+          if (String(y) !== String(selectedYear)) return false;
+        }
 
-      // 3. Month filter
-      if (selectedMonth !== 'ALL') {
-        const m = item.tanggalSurat ? (new Date(item.tanggalSurat).getMonth() + 1).toString().padStart(2, '0') : null;
-        if (m !== selectedMonth) return false;
+        // 4. Month filter
+        if (selectedMonth !== 'ALL') {
+          const m = item.tanggalSurat ? (new Date(item.tanggalSurat).getMonth() + 1).toString().padStart(2, '0') : null;
+          if (m !== selectedMonth) return false;
+        }
       }
 
       return true;
     });
-  }, [agendaNotaDebit, searchTerm, selectedYear, selectedMonth]);
+  }, [agendaNotaDebit, searchTerm, selectedYear, selectedMonth, startDate, endDate]);
+
+  // Label filter periode
+  const filterPeriodText = useMemo(() => {
+    if (startDate && endDate) {
+      if (startDate === endDate) {
+        return `Tanggal ${formatDateIndo(startDate)}`;
+      }
+      return `Tanggal ${formatDateIndo(startDate)} s/d ${formatDateIndo(endDate)}`;
+    }
+    if (startDate) {
+      return `Mulai Tanggal ${formatDateIndo(startDate)}`;
+    }
+    if (endDate) {
+      return `Sampai Tanggal ${formatDateIndo(endDate)}`;
+    }
+    if (selectedMonth !== 'ALL' && selectedYear !== 'ALL') {
+      const monthObj = MONTH_OPTIONS.find((m) => m.value === selectedMonth);
+      return `Bulan ${monthObj ? monthObj.label : selectedMonth} ${selectedYear}`;
+    }
+    if (selectedYear !== 'ALL') {
+      return `Tahun ${selectedYear}`;
+    }
+    if (selectedMonth !== 'ALL') {
+      const monthObj = MONTH_OPTIONS.find((m) => m.value === selectedMonth);
+      return `Bulan ${monthObj ? monthObj.label : selectedMonth}`;
+    }
+    return 'Semua Periode';
+  }, [startDate, endDate, selectedMonth, selectedYear]);
 
   // Summary Metrics
   const summaryMetrics = useMemo(() => {
@@ -99,12 +136,14 @@ export const BukuAgendaNotaDebitView = ({ onOpenCreate, onOpenEdit, onOpenPrint 
     };
   }, [filteredData]);
 
-  const hasActiveFilter = Boolean(searchTerm.trim() || selectedYear !== 'ALL' || selectedMonth !== 'ALL');
+  const hasActiveFilter = Boolean(searchTerm.trim() || selectedYear !== 'ALL' || selectedMonth !== 'ALL' || startDate || endDate);
 
   const handleResetFilters = () => {
     setSearchTerm('');
     setSelectedYear('ALL');
     setSelectedMonth('ALL');
+    setStartDate('');
+    setEndDate('');
   };
 
   const handleDelete = (id, nomorSurat) => {
@@ -148,7 +187,7 @@ export const BukuAgendaNotaDebitView = ({ onOpenCreate, onOpenEdit, onOpenPrint 
       ws.mergeCells(`A${title.number}:H${title.number}`);
       ws.getCell(`A${title.number}`).alignment = { horizontal: 'center' };
 
-      const sub = ws.addRow([`BKI Cabang Pontianak — Total ${filteredData.length} Surat Pengantar`]);
+      const sub = ws.addRow([`BKI Cabang Pontianak — Periode: ${filterPeriodText} — Total ${filteredData.length} Surat Pengantar`]);
       sub.font = { name: 'Calibri', size: 10, italic: true };
       ws.mergeCells(`A${sub.number}:H${sub.number}`);
       ws.getCell(`A${sub.number}`).alignment = { horizontal: 'center' };
@@ -208,7 +247,8 @@ export const BukuAgendaNotaDebitView = ({ onOpenCreate, onOpenEdit, onOpenPrint 
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Buku_Agenda_Nota_Debit_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const fileDateSuffix = startDate ? `${startDate}_sd_${endDate || 'akhir'}` : new Date().toISOString().split('T')[0];
+      a.download = `Buku_Agenda_Nota_Debit_${fileDateSuffix}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
       toast.success('Buku Agenda Nota Debit berhasil diexport ke Excel!');
@@ -315,7 +355,10 @@ export const BukuAgendaNotaDebitView = ({ onOpenCreate, onOpenEdit, onOpenPrint 
             <select
               className="form-select"
               value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
+              onChange={(e) => {
+                setSelectedYear(e.target.value);
+                if (startDate || endDate) { setStartDate(''); setEndDate(''); }
+              }}
               style={{ fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
             >
               <option value="ALL">Semua Tahun</option>
@@ -330,7 +373,10 @@ export const BukuAgendaNotaDebitView = ({ onOpenCreate, onOpenEdit, onOpenPrint 
             <select
               className="form-select"
               value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
+              onChange={(e) => {
+                setSelectedMonth(e.target.value);
+                if (startDate || endDate) { setStartDate(''); setEndDate(''); }
+              }}
               style={{ fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
             >
               <option value="ALL">Semua Bulan</option>
@@ -338,6 +384,59 @@ export const BukuAgendaNotaDebitView = ({ onOpenCreate, onOpenEdit, onOpenPrint 
                 <option key={m.value} value={m.value}>{m.label}</option>
               ))}
             </select>
+          </div>
+
+          {/* Multi Hari / Rentang Tanggal */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.2rem 0.5rem' }}>
+            <Calendar size={14} color="#0284c7" />
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155' }}>Tgl:</span>
+            <input
+              type="date"
+              className="form-input"
+              value={startDate}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                if (e.target.value) {
+                  setSelectedYear('ALL');
+                  setSelectedMonth('ALL');
+                }
+              }}
+              style={{ height: '30px', fontSize: '0.78rem', padding: '0.1rem 0.35rem', width: '125px' }}
+              title="Tanggal Mulai"
+            />
+            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>s/d</span>
+            <input
+              type="date"
+              className="form-input"
+              value={endDate}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                if (e.target.value) {
+                  setSelectedYear('ALL');
+                  setSelectedMonth('ALL');
+                }
+              }}
+              style={{ height: '30px', fontSize: '0.78rem', padding: '0.1rem 0.35rem', width: '125px' }}
+              title="Tanggal Akhir"
+            />
+            {(startDate || endDate) && (
+              <button
+                type="button"
+                onClick={() => { setStartDate(''); setEndDate(''); }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: '#94a3b8'
+                }}
+                title="Hapus Filter Tanggal"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
 
           {/* Reset Filter Button */}
@@ -547,6 +646,9 @@ export const BukuAgendaNotaDebitView = ({ onOpenCreate, onOpenEdit, onOpenPrint 
         data={filteredData}
         selectedYear={selectedYear}
         selectedMonth={selectedMonth}
+        startDate={startDate}
+        endDate={endDate}
+        filterPeriodLabel={filterPeriodText}
       />
     </div>
   );

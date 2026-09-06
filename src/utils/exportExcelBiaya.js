@@ -61,8 +61,8 @@ export const exportBiayaPerjalananDinas = async (item, usersList = [], gradeTari
     const kacabUser = usersList.find(u => u.role === 'kacab') || {};
     const kacabName = (kacabUser.name || 'MUHSON NURROCHMAT').toUpperCase();
     const kacabDesc = kacabUser.nup || 'NUP.48199-KI';
-    const pembuatUser = usersList.find(u => u.role === 'admin' || u.role === 'keuangan') || {};
-    const pembuatName = (pembuatUser.name || 'RENZA MUHARAM').toUpperCase();
+    const pembuatUser = usersList.find(u => u.role === 'keuangan' || u.username === 'finance') || usersList.find(u => u.role === 'admin') || {};
+    const pembuatName = (pembuatUser.name || 'Fitrian A,Md').toUpperCase();
     const pembuatDesc = pembuatUser.nup || 'NUP.50382-KI';
 
     const tglMulaiStr = formatDateIndo(item.tglMulai).toUpperCase();

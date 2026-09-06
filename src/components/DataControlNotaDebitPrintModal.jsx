@@ -25,17 +25,15 @@ export const DataControlNotaDebitPrintModal = ({
   const kepalaCabangName = (adminSettings?.kepalaCabang || 'MUHSON NURROCHMAT').toUpperCase();
   const kepalaCabangNup = adminSettings?.nup || '48199-KI';
 
-  const pembuatUser = (usersList || []).find((u) =>
-    (adminSettings?.pembuatDaftar && u.name === adminSettings.pembuatDaftar) ||
-    (u.name && u.name.toUpperCase().includes('RENZA'))
-  ) || {};
-  const pembuatDaftarName = (adminSettings?.pembuatDaftar || pembuatUser.name || 'RENZA MUHARAM').toUpperCase();
-  const pembuatDaftarNup = adminSettings?.nupPembuatDaftar || pembuatUser.nup || '50382-KI';
+  const financeUser = (usersList || []).find((u) => u.role === 'keuangan' || u.username === 'finance' || (u.name && u.name.toUpperCase().includes('FITRIAN'))) || {};
+  const pembuatDaftarName = (adminSettings?.pembuatDaftarNotaDebit || (financeUser.name && !financeUser.name.toUpperCase().includes('RENZA') ? financeUser.name : 'Fitrian A,Md')).toUpperCase();
+  const pembuatDaftarNup = adminSettings?.nupPembuatDaftarNotaDebit || (financeUser.nup && financeUser.nup !== '50382-KI' ? financeUser.nup : '');
 
   // Gambar TTD
   const kacabUser = (usersList || []).find((u) => u.name === kepalaCabangName || u.role === 'kacab') || {};
   const kacabSignature = adminSettings?.kacabSignatureUrl || kacabUser.signatureUrl || '/signatures/kacab_muhson_signature.png';
-  const pembuatSignature = adminSettings?.pembuatSignatureUrl || pembuatUser.signatureUrl || '/signatures/pembuat_renza_signature.png';
+  // Fitri belum ada TTD
+  const pembuatSignature = adminSettings?.pembuatSignatureNotaDebitUrl || (financeUser.signatureUrl && !financeUser.signatureUrl.includes('pembuat_renza') ? financeUser.signatureUrl : '');
 
   const todayFormatted = formatDateIndo(new Date().toISOString().split('T')[0]);
 
@@ -344,7 +342,7 @@ export const DataControlNotaDebitPrintModal = ({
                           {bIdx === 0 && (
                             <>
                               <td rowSpan={rowSpan} style={{ ...tdStyle(true), fontSize: '6.5pt' }}>
-                                {item.tandaTanganPenerima || '-'}
+                                {(item.tandaTanganPenerima && item.tandaTanganPenerima !== '-' && item.tandaTanganPenerima.toLowerCase() !== 'aada') ? item.tandaTanganPenerima : 'Fitrian A,Md'}
                               </td>
                               <td rowSpan={rowSpan} style={{
                                 ...tdStyle(true),
@@ -435,7 +433,7 @@ export const DataControlNotaDebitPrintModal = ({
                     PT. Biro Klasifikasi Indonesia (Persero)
                   </div>
 
-                  {withSignature ? (
+                  {withSignature && pembuatSignature ? (
                     <div style={{ height: '55px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0.2rem 0' }}>
                       <img
                         src={pembuatSignature}
@@ -451,8 +449,8 @@ export const DataControlNotaDebitPrintModal = ({
                   <div style={{ fontWeight: 900, textDecoration: 'underline', fontSize: '9pt', color: '#000000' }}>
                     {pembuatDaftarName}
                   </div>
-                  <div style={{ fontSize: '7.8pt', color: '#334155' }}>
-                    NUP: {pembuatDaftarNup}
+                  <div style={{ fontSize: '7.8pt', color: '#334155', minHeight: '14px' }}>
+                    {pembuatDaftarNup ? `NUP: ${pembuatDaftarNup}` : ''}
                   </div>
                 </div>
               </div>

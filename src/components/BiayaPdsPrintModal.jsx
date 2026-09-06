@@ -113,14 +113,15 @@ export const BiayaPdsPrintModal = ({
   const kepalaCabang = adminSettings?.kepalaCabang || 'MUHSON NURROCHMAT';
   const nup = adminSettings?.nup || '48199-KI';
 
-  const pembuatUser = usersList?.find(u => (adminSettings?.pembuatDaftar && u.name === adminSettings.pembuatDaftar) || u.role === 'admin' || u.role === 'keuangan') || {};
-  const pembuatName = (adminSettings?.pembuatDaftar || pembuatUser.name || 'RENZA MUHARAM').toUpperCase();
-  const pembuatDesc = adminSettings?.nupPembuatDaftar ? `NUP.${adminSettings.nupPembuatDaftar}` : (pembuatUser.nup ? `NUP.${pembuatUser.nup}` : 'NUP.50382-KI');
+  const renzaUser = usersList?.find(u => u.username === 'renza' || u.name?.toUpperCase().includes('RENZA') || u.id === 'usr-renza') || {};
+  const pembuatName = (adminSettings?.pembuatDaftarPds || (adminSettings?.pembuatDaftar !== 'Fitrian A,Md' ? adminSettings?.pembuatDaftar : null) || renzaUser.name || 'RENZA MUHARAM').toUpperCase();
+  const pembuatNup = adminSettings?.nupPembuatDaftarPds || (adminSettings?.nupPembuatDaftar && adminSettings?.pembuatDaftar !== 'Fitrian A,Md' ? adminSettings.nupPembuatDaftar : null) || renzaUser.nup || '50382-KI';
+  const pembuatDesc = `NUP.${pembuatNup}`;
 
   // Signatures Lookup
   const kacabUser = usersList?.find((u) => u.name === kepalaCabang || u.role === 'kacab') || {};
   const kacabSignature = adminSettings?.kacabSignatureUrl || kacabUser.signatureUrl || '/signatures/kacab_muhson_signature.png';
-  const pembuatSignature = adminSettings?.pembuatSignatureUrl || pembuatUser.signatureUrl || '/signatures/pembuat_renza_signature.png';
+  const pembuatSignature = adminSettings?.pembuatSignaturePdsUrl || adminSettings?.pembuatSignatureUrl || renzaUser.signatureUrl || '/signatures/pembuat_renza_signature.png';
 
   const isSurveyorMuhson = (suratTugas.petugas || '').toUpperCase().includes('MUHSON');
   let surveyorSignature = null;
@@ -328,7 +329,7 @@ export const BiayaPdsPrintModal = ({
       sigNameRow.getCell(7).font = { name: 'Calibri', size: 10, bold: true, underline: true };
       sigNameRow.getCell(7).alignment = { horizontal: 'center' };
 
-      const sigNupRow = worksheet.addRow(['', `NUP.${nup}`, '', '', '', '', `NUP.${pembuatDesc.replace('NUP.', '')}`, '']);
+      const sigNupRow = worksheet.addRow(['', `NUP.${nup}`, '', '', '', '', pembuatDesc ? (pembuatDesc.startsWith('NUP.') ? pembuatDesc : `NUP.${pembuatDesc}`) : '', '']);
       sigNupRow.getCell(2).font = { name: 'Calibri', size: 9, bold: true };
       sigNupRow.getCell(2).alignment = { horizontal: 'center' };
       sigNupRow.getCell(7).font = { name: 'Calibri', size: 9, bold: true };
@@ -835,7 +836,7 @@ export const BiayaPdsPrintModal = ({
                   <div style={{ fontWeight: 'bold', textDecoration: 'underline', fontSize: '9.5pt' }}>
                     {pembuatName}
                   </div>
-                  <div style={{ fontSize: '8.5pt' }}>
+                  <div style={{ fontSize: '8.5pt', minHeight: '14px' }}>
                     {pembuatDesc}
                   </div>
                 </div>
@@ -1064,7 +1065,7 @@ export const BiayaPdsPrintModal = ({
                         <div style={{ fontWeight: 800, textDecoration: 'underline' }}>
                           {pembuatName}
                         </div>
-                        <div style={{ fontWeight: 700, fontSize: '9pt' }}>
+                        <div style={{ fontWeight: 700, fontSize: '9pt', minHeight: '14px' }}>
                           {pembuatDesc}
                         </div>
                       </div>

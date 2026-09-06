@@ -184,6 +184,11 @@ export const UserManagementTable = () => {
                         </span>
                       )}
                     </div>
+                    {item.nup && (
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                        NUP: {item.nup}
+                      </div>
+                    )}
                   </td>
                   <td>
                     <div style={{ fontSize: '0.875rem', color: 'var(--accent-primary)', fontWeight: 800 }}>

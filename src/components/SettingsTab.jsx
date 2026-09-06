@@ -250,6 +250,7 @@ export const SettingsTab = () => {
     name: currentUser?.name || '',
     email: currentUser?.email || '',
     phone: currentUser?.phone || '',
+    nup: currentUser?.nup || '',
     signatureUrl: currentUser?.signatureUrl || ''
   });
 
@@ -259,6 +260,7 @@ export const SettingsTab = () => {
         name: currentUser.name || '',
         email: currentUser.email || '',
         phone: currentUser.phone || '',
+        nup: currentUser.nup || '',
         signatureUrl: currentUser.signatureUrl || ''
       });
     }
@@ -327,17 +329,24 @@ export const SettingsTab = () => {
   const [signatoryInput, setSignatoryInput] = useState({
     kepalaCabang: adminSettings?.kepalaCabang || 'MUHSON NURROCHMAT',
     nup: adminSettings?.nup || '48199-KI',
-    pembuatDaftar: adminSettings?.pembuatDaftar || 'RENZA MUHARAM',
-    nupPembuatDaftar: adminSettings?.nupPembuatDaftar || '50382-KI',
+    pembuatDaftar: adminSettings?.pembuatDaftarPds || 'RENZA MUHARAM',
+    nupPembuatDaftar: adminSettings?.nupPembuatDaftarPds || '50382-KI',
+    pembuatDaftarNotaDebit: adminSettings?.pembuatDaftarNotaDebit || 'Fitrian A,Md',
+    nupPembuatDaftarNotaDebit: adminSettings?.nupPembuatDaftarNotaDebit || '',
     keteranganLain: adminSettings?.keteranganLain || 'BIAYA DITANGGUNG SEPENUHNYA OLEH PT.BIRO KLASIFIKASI INDONESIA (Persero) CAB.MADYA KLAS PONTIANAK',
     tembusan: adminSettings?.tembusan || '1. Yth. Kepala Divisi keuangan\nC:/surat tugas kacab/~srt/2026',
     kacabSignatureUrl: adminSettings?.kacabSignatureUrl || '',
-    pembuatSignatureUrl: adminSettings?.pembuatSignatureUrl || ''
+    pembuatSignatureUrl: adminSettings?.pembuatSignaturePdsUrl || adminSettings?.pembuatSignatureUrl || '/signatures/pembuat_renza_signature.png'
   });
 
   const handleSaveAdminSettings = (e) => {
     e.preventDefault();
-    updateAdminSettings(signatoryInput);
+    updateAdminSettings({
+      ...signatoryInput,
+      pembuatDaftarPds: signatoryInput.pembuatDaftar,
+      nupPembuatDaftarPds: signatoryInput.nupPembuatDaftar,
+      pembuatSignaturePdsUrl: signatoryInput.pembuatSignatureUrl
+    });
     setAdminMsg('Pengaturan Penandatangan dan TTD Digital berhasil disimpan!');
     setTimeout(() => setAdminMsg(''), 4000);
   };
@@ -565,18 +574,35 @@ export const SettingsTab = () => {
               ⭐ Grade: <strong>{currentUser.grade}</strong>
             </span>
           )}
+          {currentUser?.nup && (
+            <span className="badge" style={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.25)', color: '#4f46e5', padding: '0.35rem 0.65rem' }}>
+              🆔 NUP: <strong>{currentUser.nup}</strong>
+            </span>
+          )}
         </div>
 
         <form onSubmit={handleUpdateProfile} style={{ maxWidth: '560px' }}>
-          <div className="form-group">
-            <label className="form-label">Nama Lengkap</label>
-            <input
-              type="text"
-              className="form-input"
-              value={profileInput.name}
-              onChange={(e) => setProfileInput({ ...profileInput, name: e.target.value })}
-              required
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Nama Lengkap *</label>
+              <input
+                type="text"
+                className="form-input"
+                value={profileInput.name}
+                onChange={(e) => setProfileInput({ ...profileInput, name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Nomor NUP</label>
+              <input
+                type="text"
+                className="form-input"
+                value={profileInput.nup}
+                onChange={(e) => setProfileInput({ ...profileInput, nup: e.target.value })}
+                placeholder="Contoh: 50382-KI"
+              />
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
@@ -832,9 +858,10 @@ export const SettingsTab = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '0.25rem' }}>
+            {/* Pembuat Daftar PDS & SPS */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '0.5rem' }}>
               <div className="form-group">
-                <label className="form-label">Nama Pembuat Daftar *</label>
+                <label className="form-label">Nama Pembuat Daftar (PDS & SPS) *</label>
                 <input
                   type="text"
                   className="form-input"
@@ -846,7 +873,7 @@ export const SettingsTab = () => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">NUP Pembuat Daftar *</label>
+                <label className="form-label">NUP Pembuat Daftar (PDS & SPS) *</label>
                 <input
                   type="text"
                   className="form-input"
@@ -854,6 +881,32 @@ export const SettingsTab = () => {
                   onChange={(e) => setSignatoryInput({ ...signatoryInput, nupPembuatDaftar: e.target.value })}
                   placeholder="Contoh: 50382-KI"
                   required
+                />
+              </div>
+            </div>
+
+            {/* Pembuat Daftar Nota Debit */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '0.25rem' }}>
+              <div className="form-group">
+                <label className="form-label">Nama Pembuat Daftar (Nota Debit) *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={signatoryInput.pembuatDaftarNotaDebit}
+                  onChange={(e) => setSignatoryInput({ ...signatoryInput, pembuatDaftarNotaDebit: e.target.value })}
+                  placeholder="Contoh: Fitrian A,Md"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">NUP Pembuat Daftar (Nota Debit)</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={signatoryInput.nupPembuatDaftarNotaDebit}
+                  onChange={(e) => setSignatoryInput({ ...signatoryInput, nupPembuatDaftarNotaDebit: e.target.value })}
+                  placeholder="Kosongkan jika belum ada NUP"
                 />
               </div>
             </div>
@@ -924,10 +977,10 @@ export const SettingsTab = () => {
                 )}
               </div>
 
-              {/* TTD PEMBUAT DAFTAR */}
+              {/* TTD PEMBUAT DAFTAR PDS/SPS */}
               <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1.5px dashed #cbd5e1' }}>
                 <label className="form-label" style={{ fontWeight: 700, color: '#0f172a', marginBottom: '0.4rem', display: 'block' }}>
-                  ✍️ Scan TTD Pembuat Daftar
+                  ✍️ Scan TTD Pembuat PDS/SPS (Renza)
                 </label>
                 {isValidSignature(signatoryInput.pembuatSignatureUrl) ? (
                   <div>

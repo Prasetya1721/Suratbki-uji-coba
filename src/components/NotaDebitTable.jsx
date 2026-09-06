@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Receipt, Plus, Search, Edit2, Trash2, FileSpreadsheet, TrendingUp, FileText, Printer, BarChart3, Filter, CheckCircle2, Clock, Calendar, X, BookOpen, Ship, Truck
+  Receipt, Plus, Search, Edit2, Trash2, FileSpreadsheet, TrendingUp, FileText, Printer, BarChart3, Filter, CheckCircle2, Clock, Calendar, X, BookOpen, Ship, Truck, Calculator
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { useData } from '../context/DataContext';
@@ -67,7 +67,8 @@ export const NotaDebitTable = () => {
   const [statusCetakFilter, setStatusCetakFilter] = useState('ALL'); // 'ALL' | 'TERCETAK' | 'BELUM_DICETAK'
   const [selectedYear, setSelectedYear] = useState('ALL'); // 'ALL' | 2026 ...
   const [selectedMonth, setSelectedMonth] = useState('ALL'); // 'ALL' | '01' ... '12'
-  const [selectedDate, setSelectedDate] = useState(''); // '' | 'YYYY-MM-DD'
+  const [startDate, setStartDate] = useState(''); // 'YYYY-MM-DD'
+  const [endDate, setEndDate] = useState(''); // 'YYYY-MM-DD'
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
@@ -103,7 +104,8 @@ export const NotaDebitTable = () => {
     statusCetakFilter !== 'ALL' ||
     selectedYear !== 'ALL' ||
     selectedMonth !== 'ALL' ||
-    selectedDate
+    startDate ||
+    endDate
   );
 
   const handleResetFilters = () => {
@@ -112,14 +114,23 @@ export const NotaDebitTable = () => {
     setStatusCetakFilter('ALL');
     setSelectedYear('ALL');
     setSelectedMonth('ALL');
-    setSelectedDate('');
+    setStartDate('');
+    setEndDate('');
   };
 
   // Ringkasan label filter untuk header PDF & Excel
   const filterSummaryLabel = useMemo(() => {
     const parts = [];
-    if (selectedDate) {
-      parts.push(`Tanggal ${formatDateIndo(selectedDate)}`);
+    if (startDate && endDate) {
+      if (startDate === endDate) {
+        parts.push(`Tanggal ${formatDateIndo(startDate)}`);
+      } else {
+        parts.push(`Tanggal ${formatDateIndo(startDate)} s/d ${formatDateIndo(endDate)}`);
+      }
+    } else if (startDate) {
+      parts.push(`Mulai ${formatDateIndo(startDate)}`);
+    } else if (endDate) {
+      parts.push(`Sampai ${formatDateIndo(endDate)}`);
     } else {
       if (selectedMonth !== 'ALL') {
         const mLabel = MONTH_OPTIONS.find((m) => m.value === selectedMonth)?.label;
@@ -136,7 +147,7 @@ export const NotaDebitTable = () => {
       parts.push(statusCetakFilter === 'TERCETAK' ? 'Tercetak' : 'Belum Dicetak');
     }
     return parts.join(' • ');
-  }, [selectedDate, selectedMonth, selectedYear, prosesBisnisFilter, statusCetakFilter]);
+  }, [startDate, endDate, selectedMonth, selectedYear, prosesBisnisFilter, statusCetakFilter]);
 
   const todayStr = useMemo(() => {
     const d = new Date();
@@ -173,11 +184,13 @@ export const NotaDebitTable = () => {
         if (statusCetakFilter === 'BELUM_DICETAK' && isTercetak) return false;
       }
 
-      // 4. Filter Tanggal Spesifik (YYYY-MM-DD)
-      if (selectedDate) {
-        if (item.tanggalND !== selectedDate) return false;
+      // 4. Filter Multi Hari / Rentang Tanggal (YYYY-MM-DD)
+      if (startDate || endDate) {
+        const itemDate = item.tanggalND ? String(item.tanggalND).split('T')[0] : '';
+        if (startDate && (!itemDate || itemDate < startDate)) return false;
+        if (endDate && (!itemDate || itemDate > endDate)) return false;
       } else {
-        // 5. Filter Tahun & Bulan (jika tanggal spesifik tidak dipilih)
+        // 5. Filter Tahun & Bulan (jika tanggal spesifik / rentang hari tidak dipilih)
         if (item.tanggalND) {
           const parts = String(item.tanggalND).split('-');
           const itemYear = parts[0];
@@ -191,12 +204,13 @@ export const NotaDebitTable = () => {
 
       return true;
     });
-  }, [notaDebit, searchTerm, prosesBisnisFilter, statusCetakFilter, selectedYear, selectedMonth, selectedDate]);
+  }, [notaDebit, searchTerm, prosesBisnisFilter, statusCetakFilter, selectedYear, selectedMonth, startDate, endDate]);
 
   // Summary totals
   const totalND = filteredData.length;
   const totalFeeSurvey = filteredData.reduce((s, i) => s + (Number(i.feeSurvey) || 0), 0);
   const totalBiayaSurvey = filteredData.reduce((s, i) => s + (Number(i.biayaSurvey) || 0), 0);
+  const totalBiayaSebelumPPN = totalFeeSurvey + totalBiayaSurvey;
   const totalSetelahPPN = filteredData.reduce((s, i) => s + (Number(i.totalSetelahPPN) || 0), 0);
 
   const handleSave = (data) => {
@@ -384,7 +398,7 @@ export const NotaDebitTable = () => {
           { col: 10, val: item.penggunaJasa || '' },
           { col: 11, val: item.jenisSurvey || '' },
           { col: 12, val: kat },
-          { col: 15, val: item.tandaTanganPenerima || '' },
+          { col: 15, val: (item.tandaTanganPenerima && item.tandaTanganPenerima !== '-' && item.tandaTanganPenerima.toLowerCase() !== 'aada') ? item.tandaTanganPenerima : 'Fitrian A,Md' },
           { col: 16, val: item.keterangan || '' },
         ];
 
@@ -648,11 +662,12 @@ export const NotaDebitTable = () => {
           </div>
 
           {/* ── SUMMARY CARDS ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
             {[
               { label: 'Total Nota Debit', value: totalND, unit: 'lembar', color: '#0369a1', bg: 'rgba(3,105,161,0.08)', icon: <FileText size={18} color="#0369a1" /> },
               { label: 'Total Fee Survey', value: formatRp(totalFeeSurvey), unit: '', color: '#059669', bg: 'rgba(5,150,105,0.08)', icon: <TrendingUp size={18} color="#059669" /> },
               { label: 'Total Biaya Survey', value: formatRp(totalBiayaSurvey), unit: '', color: '#0284c7', bg: 'rgba(2,132,199,0.08)', icon: <TrendingUp size={18} color="#0284c7" /> },
+              { label: 'Total Biaya Sebelum PPN', value: formatRp(totalBiayaSebelumPPN), unit: '', color: '#d97706', bg: 'rgba(217,119,6,0.08)', icon: <Calculator size={18} color="#d97706" /> },
               { label: 'Total Setelah PPN', value: formatRp(totalSetelahPPN), unit: '', color: '#047857', bg: 'rgba(4,120,87,0.08)', icon: <Receipt size={18} color="#047857" /> },
             ].map((card) => (
               <div key={card.label} style={{ background: card.bg, border: `1px solid ${card.color}22`, borderRadius: '12px', padding: '0.85rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -724,7 +739,7 @@ export const NotaDebitTable = () => {
                   value={selectedYear}
                   onChange={(e) => {
                     setSelectedYear(e.target.value);
-                    if (selectedDate) setSelectedDate('');
+                    if (startDate || endDate) { setStartDate(''); setEndDate(''); }
                   }}
                   style={{ height: '36px', fontSize: '0.8rem', padding: '0.2rem 0.5rem', minWidth: '120px' }}
                   title="Filter Tahun"
@@ -745,7 +760,7 @@ export const NotaDebitTable = () => {
                   value={selectedMonth}
                   onChange={(e) => {
                     setSelectedMonth(e.target.value);
-                    if (selectedDate) setSelectedDate('');
+                    if (startDate || endDate) { setStartDate(''); setEndDate(''); }
                   }}
                   style={{ height: '36px', fontSize: '0.8rem', padding: '0.2rem 0.5rem', minWidth: '130px' }}
                   title="Filter Bulan"
@@ -759,50 +774,57 @@ export const NotaDebitTable = () => {
                 </select>
               </div>
 
-              {/* FILTER TANGGAL */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <input
-                    type="date"
-                    className="form-input"
-                    value={selectedDate}
-                    onChange={(e) => {
-                      setSelectedDate(e.target.value);
-                      if (e.target.value) {
-                        setSelectedYear('ALL');
-                        setSelectedMonth('ALL');
-                      }
-                    }}
+              {/* FILTER MULTI HARI / RENTANG TANGGAL */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.2rem 0.5rem' }}>
+                <Calendar size={14} color="#0284c7" />
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155' }}>Tgl:</span>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    if (e.target.value) {
+                      setSelectedYear('ALL');
+                      setSelectedMonth('ALL');
+                    }
+                  }}
+                  style={{ height: '30px', fontSize: '0.78rem', padding: '0.1rem 0.35rem', width: '125px' }}
+                  title="Tanggal Mulai"
+                />
+                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>s/d</span>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    if (e.target.value) {
+                      setSelectedYear('ALL');
+                      setSelectedMonth('ALL');
+                    }
+                  }}
+                  style={{ height: '30px', fontSize: '0.78rem', padding: '0.1rem 0.35rem', width: '125px' }}
+                  title="Tanggal Akhir"
+                />
+                {(startDate || endDate) && (
+                  <button
+                    type="button"
+                    onClick={() => { setStartDate(''); setEndDate(''); }}
                     style={{
-                      height: '36px',
-                      fontSize: '0.8rem',
-                      padding: '0.2rem 0.5rem',
-                      paddingRight: selectedDate ? '1.8rem' : '0.5rem',
-                      minWidth: '135px'
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: '#94a3b8'
                     }}
-                    title="Pilih Tanggal Spesifik"
-                  />
-                  {selectedDate && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedDate('')}
-                      style={{
-                        position: 'absolute',
-                        right: '6px',
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: 'var(--text-muted)'
-                      }}
-                      title="Hapus filter tanggal"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
+                    title="Hapus filter rentang tanggal"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
 
               {/* RESET FILTER */}
@@ -948,7 +970,9 @@ export const NotaDebitTable = () => {
 
                         {bIdx === 0 && (
                           <>
-                            <td rowSpan={rowSpan} style={{ ...tdStyle(true), padding: '0.4rem', fontWeight: 700, fontSize: '0.76rem', color: 'var(--text-secondary)' }}>{item.tandaTanganPenerima || '-'}</td>
+                            <td rowSpan={rowSpan} style={{ ...tdStyle(true), padding: '0.4rem', fontWeight: 700, fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
+                              {(item.tandaTanganPenerima && item.tandaTanganPenerima !== '-' && item.tandaTanganPenerima.toLowerCase() !== 'aada') ? item.tandaTanganPenerima : 'Fitrian A,Md'}
+                            </td>
                             <td rowSpan={rowSpan} style={{ ...tdStyle(true), padding: '0.4rem' }}>
                               {(item.keterangan === 'Tercetak' || item.keterangan === 'Tercetak Baik') ? (
                                 <span

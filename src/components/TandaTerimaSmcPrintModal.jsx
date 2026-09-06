@@ -52,13 +52,10 @@ export const TandaTerimaSmcPrintModal = ({
   const jumlahPendamping = Number(suratTugas.jumlahPendamping) || 2;
   const totalJumlahTerima = tarifExpertise * jumlahPendamping;
 
-  // Pembuat Daftar: Renza Muharam (NUP.50382-KI)
-  const pembuatUser = (usersList || []).find((u) =>
-    (adminSettings?.pembuatDaftar && u.name === adminSettings.pembuatDaftar) ||
-    (u.name && u.name.toUpperCase().includes('RENZA'))
-  ) || {};
-  const pembuatDaftarName = (adminSettings?.pembuatDaftar || pembuatUser.name || 'RENZA MUHARAM').toUpperCase();
-  const pembuatDaftarNup = adminSettings?.nupPembuatDaftar || pembuatUser.nup || '50382-KI';
+  // Pembuat Daftar (PDS SMC): Renza Muharam (NUP.50382-KI)
+  const renzaUser = (usersList || []).find((u) => u.username === 'renza' || u.name?.toUpperCase().includes('RENZA') || u.id === 'usr-renza') || {};
+  const pembuatDaftarName = (adminSettings?.pembuatDaftarPds || (adminSettings?.pembuatDaftar !== 'Fitrian A,Md' ? adminSettings?.pembuatDaftar : null) || renzaUser.name || 'RENZA MUHARAM').toUpperCase();
+  const pembuatDaftarNup = adminSettings?.nupPembuatDaftarPds || (adminSettings?.nupPembuatDaftar && adminSettings?.pembuatDaftar !== 'Fitrian A,Md' ? adminSettings.nupPembuatDaftar : null) || renzaUser.nup || '50382-KI';
 
   const kepalaCabangName = (adminSettings?.kepalaCabang || 'MUHSON NURROCHMAT').toUpperCase();
   const kepalaCabangNup = adminSettings?.nup || '48199-KI';
@@ -69,7 +66,7 @@ export const TandaTerimaSmcPrintModal = ({
 
   const kacabUser = (usersList || []).find((u) => u.name === kepalaCabangName || u.role === 'kacab') || {};
   const kacabSignature = adminSettings?.kacabSignatureUrl || kacabUser.signatureUrl || '/signatures/kacab_muhson_signature.png';
-  const pembuatSignature = adminSettings?.pembuatSignatureUrl || pembuatUser.signatureUrl || '/signatures/pembuat_renza_signature.png';
+  const pembuatSignature = adminSettings?.pembuatSignaturePdsUrl || adminSettings?.pembuatSignatureUrl || renzaUser.signatureUrl || '/signatures/pembuat_renza_signature.png';
 
   const handlePrint = () => {
     const originalTitle = document.title;
@@ -254,7 +251,7 @@ export const TandaTerimaSmcPrintModal = ({
       sigNameRow.getCell(7).alignment = { horizontal: 'center' };
 
       // Signature NUP Row 24
-      const sigNupRow = worksheet.addRow(['', `NUP.${kepalaCabangNup}`, '', '', '', '', `NUP.${pembuatDaftarNup}`, '']);
+      const sigNupRow = worksheet.addRow(['', `NUP.${kepalaCabangNup}`, '', '', '', '', pembuatDaftarNup ? `NUP.${pembuatDaftarNup}` : '', '']);
       sigNupRow.getCell(2).font = { name: 'Calibri', size: 9, bold: true };
       sigNupRow.getCell(2).alignment = { horizontal: 'center' };
       sigNupRow.getCell(7).font = { name: 'Calibri', size: 9, bold: true };
@@ -620,8 +617,8 @@ export const TandaTerimaSmcPrintModal = ({
                   <div style={{ fontWeight: 800, textDecoration: 'underline' }}>
                     {pembuatDaftarName}
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: '9pt' }}>
-                    NUP.{pembuatDaftarNup}
+                  <div style={{ fontWeight: 700, fontSize: '9pt', minHeight: '14px' }}>
+                    {pembuatDaftarNup ? `NUP.${pembuatDaftarNup}` : ''}
                   </div>
                 </div>
               </div>

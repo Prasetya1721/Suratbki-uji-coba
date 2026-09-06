@@ -561,7 +561,7 @@ export const SuratPengantarPrintModal = ({ isOpen, onClose, data }) => {
                   position: 'relative',
                   display: 'flex',
                   flexDirection: 'column',
-                  justifyContent: 'space-between',
+                  justifyContent: 'flex-start',
                   zoom: isMobileScreen && mobileFit ? fitScale : 1,
                 }}
               >
@@ -869,9 +869,10 @@ export const SuratPengantarPrintModal = ({ isOpen, onClose, data }) => {
 
                 {/* 9. FOOTER RESMI BKI */}
                 <div
+                  className="bki-footer-block"
                   style={{
                     paddingTop: '0.5rem',
-                    marginTop: 'auto',
+                    marginTop: '2.5rem',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'flex-end',
@@ -990,7 +991,10 @@ export const SuratPengantarPrintModal = ({ isOpen, onClose, data }) => {
                 break-inside: avoid !important;
                 display: flex !important;
                 flex-direction: column !important;
-                justify-content: space-between !important;
+                justify-content: flex-start !important;
+              }
+              .bki-footer-block {
+                margin-top: 2.5rem !important;
               }
             }
           `}</style>

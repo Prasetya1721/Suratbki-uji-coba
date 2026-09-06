@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Check, Receipt, FileText, User, Building2, DollarSign, Hash, CalendarDays, Pen, Ship, TrendingUp } from 'lucide-react';
+import { X, Check, Receipt, FileText, User, Building2, DollarSign, Hash, CalendarDays, Ship, TrendingUp, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ModalPortal } from './ModalPortal';
 import { useAuth } from '../context/AuthContext';
@@ -69,7 +69,7 @@ const EMPTY_FORM = {
   feeSurvey: 0,
   biayaSurvey: 0,
   ppnRate: 11,
-  tandaTanganPenerima: '',
+  tandaTanganPenerima: 'Fitrian A,Md',
   keterangan: 'Belum Dicetak',
 };
 
@@ -187,7 +187,7 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
   );
 
   const globalPpnRate = adminSettings?.ppnRate !== undefined ? Number(adminSettings.ppnRate) : 11;
-  const activePpnRate = form.ppnRate !== undefined && form.ppnRate !== '' ? Number(form.ppnRate) : globalPpnRate;
+  const activePpnRate = globalPpnRate;
 
   // Kalkulasi otomatis biaya
   const biayaSebelumPPN = (Number(form.feeSurvey) || 0) + (Number(form.biayaSurvey) || 0);
@@ -205,7 +205,10 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
         setForm({
           ...EMPTY_FORM,
           ...initialData,
-          ppnRate: initialData.ppnRate !== undefined ? initialData.ppnRate : globalPpnRate,
+          ppnRate: globalPpnRate,
+          tandaTanganPenerima: (initialData.tandaTanganPenerima && initialData.tandaTanganPenerima !== '-' && initialData.tandaTanganPenerima.toLowerCase() !== 'aada')
+            ? initialData.tandaTanganPenerima
+            : 'Fitrian A,Md',
           kategoriBisnis: initialData.kategoriBisnis || determineKategoriBisnis(initialData.jenisSurvey || ''),
         });
         const allKnown = [
@@ -227,6 +230,7 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
           jenisSurvey: defaultSurvey,
           kategoriBisnis: determineKategoriBisnis(defaultSurvey),
           ppnRate: globalPpnRate,
+          tandaTanganPenerima: 'Fitrian A,Md',
         });
         setIsCustomSurvey(false);
       }
@@ -811,14 +815,31 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
                       </span>
                     </div>
                   ))}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', justifyContent: 'center', alignItems: 'center', background: '#f8fafc', padding: '0.35rem 0.5rem', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Tarif PPN (%)</span>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.25rem',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      background: '#f8fafc',
+                      padding: '0.35rem 0.5rem',
+                      borderRadius: '6px',
+                      border: '1px dashed #cbd5e1'
+                    }}
+                    title="Terkunci: Pengaturan Tarif PPN diatur terpusat di Menu Manajemen Tarif"
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <Lock size={10} color="#64748b" />
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                        Tarif PPN (%)
+                      </span>
+                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
                       <input
                         type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
+                        readOnly
+                        disabled
                         style={{
                           width: '55px',
                           textAlign: 'center',
@@ -827,12 +848,12 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
                           color: '#d97706',
                           padding: '0.15rem 0.2rem',
                           borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
-                          background: '#ffffff'
+                          border: '1px solid #e2e8f0',
+                          background: '#f1f5f9',
+                          cursor: 'not-allowed'
                         }}
-                        value={form.ppnRate !== undefined ? form.ppnRate : globalPpnRate}
-                        onChange={(e) => handleChange('ppnRate', e.target.value)}
-                        title="Dapat diedit sesuai kebutuhan transaksi atau mengikuti standar Manajemen Tarif"
+                        value={globalPpnRate}
+                        title="Terkunci: Untuk mengubah tarif PPN, silakan buka Menu Manajemen Tarif"
                       />
                       <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#d97706' }}>%</span>
                     </div>
@@ -841,39 +862,7 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
               </div>
             </div>
 
-            {/* SEKSI 6: Tanda Tangan & Keterangan */}
-            <div>
-              <div style={sectionTitleStyle}>✍️ Tanda Tangan & Keterangan</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div style={groupStyle}>
-                  <label style={labelStyle}>
-                    <Pen size={13} color="#0369a1" />
-                    Tanda Tangan Penerima Form ND
-                  </label>
-                  <input
-                    style={inputStyle}
-                    type="text"
-                    placeholder="Nama penerima (misal: Fitrian A.Md)"
-                    value={form.tandaTanganPenerima}
-                    onChange={(e) => handleChange('tandaTanganPenerima', e.target.value)}
-                  />
-                </div>
-                <div style={groupStyle}>
-                  <label style={labelStyle}>
-                    <FileText size={13} color="#0369a1" />
-                    Status Cetak (Keterangan)
-                  </label>
-                  <select
-                    style={inputStyle}
-                    value={(form.keterangan === 'Tercetak' || form.keterangan === 'Tercetak Baik') ? 'Tercetak' : 'Belum Dicetak'}
-                    onChange={(e) => handleChange('keterangan', e.target.value)}
-                  >
-                    <option value="Belum Dicetak">⏳ Belum Dicetak</option>
-                    <option value="Tercetak">✅ Tercetak</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+
 
             {/* ACTIONS */}
             <div

@@ -184,10 +184,18 @@ export const DataProvider = ({ children }) => {
     return {
       kepalaCabang: 'MUHSON NURROCHMAT',
       nup: '48199-KI',
+      // Pembuat Daftar PDS & SPS (Renza Muharam)
       pembuatDaftar: 'RENZA MUHARAM',
       nupPembuatDaftar: '50382-KI',
-      kacabSignatureUrl: '/signatures/kacab_muhson_signature.png',
       pembuatSignatureUrl: '/signatures/pembuat_renza_signature.png',
+      pembuatDaftarPds: 'RENZA MUHARAM',
+      nupPembuatDaftarPds: '50382-KI',
+      pembuatSignaturePdsUrl: '/signatures/pembuat_renza_signature.png',
+      // Pembuat Daftar Nota Debit (Fitrian A,Md - Belum ada TTD)
+      pembuatDaftarNotaDebit: 'Fitrian A,Md',
+      nupPembuatDaftarNotaDebit: '',
+      pembuatSignatureNotaDebitUrl: '',
+      kacabSignatureUrl: '/signatures/kacab_muhson_signature.png',
       tatLuarKota: 750000,
       ppnRate: 11,
       ...parsed
@@ -214,7 +222,15 @@ export const DataProvider = ({ children }) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) {
+          return parsed.map((item) => {
+            const ttd = (item.tandaTanganPenerima || '').trim();
+            if (!ttd || ttd === '-' || ttd.toLowerCase() === 'aada') {
+              return { ...item, tandaTanganPenerima: 'Fitrian A,Md' };
+            }
+            return item;
+          });
+        }
       } catch (e) {}
     }
     return [];
@@ -919,7 +935,7 @@ export const DataProvider = ({ children }) => {
       ppnRate: Number(data.ppnRate !== undefined ? data.ppnRate : (adminSettings?.ppnRate ?? 11)),
       ppnAmount: Number(data.ppnAmount) || 0,
       totalSetelahPPN: Number(data.totalSetelahPPN) || 0,
-      tandaTanganPenerima: (data.tandaTanganPenerima || '').trim(),
+      tandaTanganPenerima: (data.tandaTanganPenerima || 'Fitrian A,Md').trim(),
       keterangan: (data.keterangan || '').trim(),
     };
     setNotaDebit((prev) => [newItem, ...prev]);
@@ -942,6 +958,7 @@ export const DataProvider = ({ children }) => {
               ppnRate: Number(updatedData.ppnRate !== undefined ? updatedData.ppnRate : (item.ppnRate ?? adminSettings?.ppnRate ?? 11)),
               ppnAmount: Number(updatedData.ppnAmount ?? item.ppnAmount) || 0,
               totalSetelahPPN: Number(updatedData.totalSetelahPPN ?? item.totalSetelahPPN) || 0,
+              tandaTanganPenerima: (updatedData.tandaTanganPenerima !== undefined ? updatedData.tandaTanganPenerima : (item.tandaTanganPenerima || 'Fitrian A,Md')).trim(),
             }
           : item
       )

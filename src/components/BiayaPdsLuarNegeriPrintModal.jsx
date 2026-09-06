@@ -107,13 +107,14 @@ export const BiayaPdsLuarNegeriPrintModal = ({
   const kepalaCabang = suratTugas.kepalaCabang || adminSettings?.kepalaCabang || 'MUHSON NURROCHMAT';
   const nup = suratTugas.nup || adminSettings?.nup || '48199-KI';
 
-  const pembuatUser = usersList?.find(u => (adminSettings?.pembuatDaftar && u.name === adminSettings.pembuatDaftar) || u.role === 'admin' || u.role === 'keuangan') || {};
-  const pembuatName = (adminSettings?.pembuatDaftar || pembuatUser.name || 'RENZA MUHARAM').toUpperCase();
-  const pembuatDesc = adminSettings?.nupPembuatDaftar ? `NUP.${adminSettings.nupPembuatDaftar}` : (pembuatUser.nup ? `NUP.${pembuatUser.nup}` : 'NUP.50382-KI');
+  const renzaUser = usersList?.find(u => u.username === 'renza' || u.name?.toUpperCase().includes('RENZA') || u.id === 'usr-renza') || {};
+  const pembuatName = (adminSettings?.pembuatDaftarPds || (adminSettings?.pembuatDaftar !== 'Fitrian A,Md' ? adminSettings?.pembuatDaftar : null) || renzaUser.name || 'RENZA MUHARAM').toUpperCase();
+  const pembuatNup = adminSettings?.nupPembuatDaftarPds || (adminSettings?.nupPembuatDaftar && adminSettings?.pembuatDaftar !== 'Fitrian A,Md' ? adminSettings.nupPembuatDaftar : null) || renzaUser.nup || '50382-KI';
+  const pembuatDesc = `NUP.${pembuatNup}`;
 
   const kacabUser = usersList?.find((u) => u.name === kepalaCabang || u.role === 'kacab') || {};
   const kacabSignature = adminSettings?.kacabSignatureUrl || kacabUser.signatureUrl || '/signatures/kacab_muhson_signature.png';
-  const pembuatSignature = adminSettings?.pembuatSignatureUrl || pembuatUser.signatureUrl || '/signatures/pembuat_renza_signature.png';
+  const pembuatSignature = adminSettings?.pembuatSignaturePdsUrl || adminSettings?.pembuatSignatureUrl || renzaUser.signatureUrl || '/signatures/pembuat_renza_signature.png';
 
   const fmtNum = (n) => {
     if (n === undefined || n === null || n === 0) return '-';
@@ -1064,7 +1065,7 @@ export const BiayaPdsLuarNegeriPrintModal = ({
                     <div style={{ fontWeight: 'bold', textDecoration: 'underline', fontSize: '9.5pt' }}>
                       {pembuatName}
                     </div>
-                    <div style={{ fontSize: '8.5pt' }}>
+                    <div style={{ fontSize: '8.5pt', minHeight: '14px' }}>
                       {pembuatDesc}
                     </div>
                   </div>

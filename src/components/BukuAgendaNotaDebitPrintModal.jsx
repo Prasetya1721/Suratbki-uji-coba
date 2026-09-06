@@ -13,7 +13,10 @@ export const BukuAgendaNotaDebitPrintModal = ({
   onClose,
   data = [],
   selectedYear = 'ALL',
-  selectedMonth = 'ALL'
+  selectedMonth = 'ALL',
+  startDate = '',
+  endDate = '',
+  filterPeriodLabel = ''
 }) => {
   const { adminSettings } = useData();
   const { usersList } = useAuth();
@@ -25,17 +28,15 @@ export const BukuAgendaNotaDebitPrintModal = ({
   const kepalaCabangName = (adminSettings?.kepalaCabang || 'MUHSON NURROCHMAT').toUpperCase();
   const kepalaCabangNup = adminSettings?.nup || '48199-KI';
 
-  const pembuatUser = (usersList || []).find((u) =>
-    (adminSettings?.pembuatDaftar && u.name === adminSettings.pembuatDaftar) ||
-    (u.name && u.name.toUpperCase().includes('RENZA'))
-  ) || {};
-  const pembuatDaftarName = (adminSettings?.pembuatDaftar || pembuatUser.name || 'RENZA MUHARAM').toUpperCase();
-  const pembuatDaftarNup = adminSettings?.nupPembuatDaftar || pembuatUser.nup || '50382-KI';
+  const financeUser = (usersList || []).find((u) => u.role === 'keuangan' || u.username === 'finance' || (u.name && u.name.toUpperCase().includes('FITRIAN'))) || {};
+  const pembuatDaftarName = (adminSettings?.pembuatDaftarNotaDebit || (financeUser.name && !financeUser.name.toUpperCase().includes('RENZA') ? financeUser.name : 'Fitrian A,Md')).toUpperCase();
+  const pembuatDaftarNup = adminSettings?.nupPembuatDaftarNotaDebit || (financeUser.nup && financeUser.nup !== '50382-KI' ? financeUser.nup : '');
 
   // Gambar TTD
   const kacabUser = (usersList || []).find((u) => u.name === kepalaCabangName || u.role === 'kacab') || {};
   const kacabSignature = adminSettings?.kacabSignatureUrl || kacabUser.signatureUrl || '/signatures/kacab_muhson_signature.png';
-  const pembuatSignature = adminSettings?.pembuatSignatureUrl || pembuatUser.signatureUrl || '/signatures/pembuat_renza_signature.png';
+  // Fitri belum ada TTD
+  const pembuatSignature = adminSettings?.pembuatSignatureNotaDebitUrl || (financeUser.signatureUrl && !financeUser.signatureUrl.includes('pembuat_renza') ? financeUser.signatureUrl : '');
 
   const todayFormatted = formatDateIndo(new Date().toISOString().split('T')[0]);
 
@@ -54,13 +55,27 @@ export const BukuAgendaNotaDebitPrintModal = ({
     '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
   };
 
-  let filterPeriodText = 'Semua Periode';
-  if (selectedMonth !== 'ALL' && selectedYear !== 'ALL') {
-    filterPeriodText = `Bulan ${MONTH_NAMES[selectedMonth] || selectedMonth} ${selectedYear}`;
-  } else if (selectedYear !== 'ALL') {
-    filterPeriodText = `Tahun ${selectedYear}`;
-  } else if (selectedMonth !== 'ALL') {
-    filterPeriodText = `Bulan ${MONTH_NAMES[selectedMonth] || selectedMonth}`;
+  let filterPeriodText = filterPeriodLabel;
+  if (!filterPeriodText) {
+    if (startDate && endDate) {
+      if (startDate === endDate) {
+        filterPeriodText = `Tanggal ${formatDateIndo(startDate)}`;
+      } else {
+        filterPeriodText = `Tanggal ${formatDateIndo(startDate)} s/d ${formatDateIndo(endDate)}`;
+      }
+    } else if (startDate) {
+      filterPeriodText = `Mulai Tanggal ${formatDateIndo(startDate)}`;
+    } else if (endDate) {
+      filterPeriodText = `Sampai Tanggal ${formatDateIndo(endDate)}`;
+    } else if (selectedMonth !== 'ALL' && selectedYear !== 'ALL') {
+      filterPeriodText = `Bulan ${MONTH_NAMES[selectedMonth] || selectedMonth} ${selectedYear}`;
+    } else if (selectedYear !== 'ALL') {
+      filterPeriodText = `Tahun ${selectedYear}`;
+    } else if (selectedMonth !== 'ALL') {
+      filterPeriodText = `Bulan ${MONTH_NAMES[selectedMonth] || selectedMonth}`;
+    } else {
+      filterPeriodText = 'Semua Periode';
+    }
   }
 
   const handlePrint = () => {
@@ -364,7 +379,7 @@ export const BukuAgendaNotaDebitPrintModal = ({
                     PT. Biro Klasifikasi Indonesia (Persero)
                   </div>
 
-                  {withSignature ? (
+                  {withSignature && pembuatSignature ? (
                     <div style={{ height: '55px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0.2rem 0' }}>
                       <img
                         src={pembuatSignature}
@@ -380,8 +395,8 @@ export const BukuAgendaNotaDebitPrintModal = ({
                   <div style={{ fontWeight: 900, textDecoration: 'underline', fontSize: '9pt', color: '#000000' }}>
                     {pembuatDaftarName}
                   </div>
-                  <div style={{ fontSize: '7.8pt', color: '#334155' }}>
-                    NUP: {pembuatDaftarNup}
+                  <div style={{ fontSize: '7.8pt', color: '#334155', minHeight: '14px' }}>
+                    {pembuatDaftarNup ? `NUP: ${pembuatDaftarNup}` : ''}
                   </div>
                 </div>
               </div>

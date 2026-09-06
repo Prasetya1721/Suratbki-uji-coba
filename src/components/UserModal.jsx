@@ -35,6 +35,7 @@ export const UserModal = ({ isOpen, onClose, editItem = null }) => {
         ...editItem,
         username: editItem.username || editItem.name.toLowerCase().replace(/[^a-z0-9]/g, ''),
         password: '', // Don't prefill existing hashed password
+        nup: editItem.nup || '',
         signatureUrl: editItem.signatureUrl || ''
       });
     } else {
@@ -43,6 +44,7 @@ export const UserModal = ({ isOpen, onClose, editItem = null }) => {
         password: 'password123',
         name: '',
         email: '',
+        nup: '',
         role: 'surveyor',
         grade: 'GRADE 6 A',
         roleLabel: 'Marine Surveyor',
@@ -298,7 +300,7 @@ export const UserModal = ({ isOpen, onClose, editItem = null }) => {
                 )}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">Jabatan / Spesialisasi</label>
                   <input
@@ -307,6 +309,17 @@ export const UserModal = ({ isOpen, onClose, editItem = null }) => {
                     value={formData.roleLabel}
                     onChange={(e) => setFormData({ ...formData, roleLabel: e.target.value })}
                     placeholder="Contoh: Surveyor Lambung & SOLAS"
+                  />
+                </div>
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label">Nomor NUP</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={formData.nup || ''}
+                    onChange={(e) => setFormData({ ...formData, nup: e.target.value })}
+                    placeholder="Contoh: 50382-KI"
                   />
                 </div>
               </div>
