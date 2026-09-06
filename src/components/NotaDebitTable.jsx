@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Receipt, Plus, Search, Edit2, Trash2, FileSpreadsheet, TrendingUp, FileText, Printer, BarChart3, Filter, CheckCircle2, Clock
+  Receipt, Plus, Search, Edit2, Trash2, FileSpreadsheet, TrendingUp, FileText, Printer, BarChart3, Filter, CheckCircle2, Clock, Calendar, X
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { useData } from '../context/DataContext';
@@ -16,6 +16,21 @@ import {
 } from '../data/prosesBisnisConstants';
 import { formatDateIndo } from '../utils/formatters';
 import toast from 'react-hot-toast';
+
+const MONTH_OPTIONS = [
+  { value: '01', label: 'Januari' },
+  { value: '02', label: 'Februari' },
+  { value: '03', label: 'Maret' },
+  { value: '04', label: 'April' },
+  { value: '05', label: 'Mei' },
+  { value: '06', label: 'Juni' },
+  { value: '07', label: 'Juli' },
+  { value: '08', label: 'Agustus' },
+  { value: '09', label: 'September' },
+  { value: '10', label: 'Oktober' },
+  { value: '11', label: 'November' },
+  { value: '12', label: 'Desember' },
+];
 
 const formatRp = (val) =>
   val !== undefined && val !== null && !isNaN(val)
@@ -35,6 +50,9 @@ export const NotaDebitTable = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [prosesBisnisFilter, setProsesBisnisFilter] = useState('ALL');
   const [statusCetakFilter, setStatusCetakFilter] = useState('ALL'); // 'ALL' | 'TERCETAK' | 'BELUM_DICETAK'
+  const [selectedYear, setSelectedYear] = useState('ALL'); // 'ALL' | 2026 ...
+  const [selectedMonth, setSelectedMonth] = useState('ALL'); // 'ALL' | '01' ... '12'
+  const [selectedDate, setSelectedDate] = useState(''); // '' | 'YYYY-MM-DD'
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
@@ -44,6 +62,60 @@ export const NotaDebitTable = () => {
 
   // Modal Print PDF Data Control Nota Debit
   const [isDataControlPrintOpen, setIsDataControlPrintOpen] = useState(false);
+
+  // Daftar tahun yang tersedia
+  const availableYears = useMemo(() => {
+    const yearSet = new Set([2023, 2024, 2025, 2026, new Date().getFullYear()]);
+    (notaDebit || []).forEach((item) => {
+      if (item.tanggalND) {
+        const y = new Date(item.tanggalND).getFullYear();
+        if (!isNaN(y)) yearSet.add(y);
+      }
+    });
+    return Array.from(yearSet).sort((a, b) => b - a);
+  }, [notaDebit]);
+
+  // Cek apakah ada filter aktif
+  const hasActiveFilter = Boolean(
+    searchTerm.trim() ||
+    prosesBisnisFilter !== 'ALL' ||
+    statusCetakFilter !== 'ALL' ||
+    selectedYear !== 'ALL' ||
+    selectedMonth !== 'ALL' ||
+    selectedDate
+  );
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setProsesBisnisFilter('ALL');
+    setStatusCetakFilter('ALL');
+    setSelectedYear('ALL');
+    setSelectedMonth('ALL');
+    setSelectedDate('');
+  };
+
+  // Ringkasan label filter untuk header PDF & Excel
+  const filterSummaryLabel = useMemo(() => {
+    const parts = [];
+    if (selectedDate) {
+      parts.push(`Tanggal ${formatDateIndo(selectedDate)}`);
+    } else {
+      if (selectedMonth !== 'ALL') {
+        const mLabel = MONTH_OPTIONS.find((m) => m.value === selectedMonth)?.label;
+        parts.push(`Bulan ${mLabel}`);
+      }
+      if (selectedYear !== 'ALL') {
+        parts.push(`Tahun ${selectedYear}`);
+      }
+    }
+    if (prosesBisnisFilter !== 'ALL') {
+      parts.push(prosesBisnisFilter);
+    }
+    if (statusCetakFilter !== 'ALL') {
+      parts.push(statusCetakFilter === 'TERCETAK' ? 'Tercetak' : 'Belum Dicetak');
+    }
+    return parts.join(' • ');
+  }, [selectedDate, selectedMonth, selectedYear, prosesBisnisFilter, statusCetakFilter]);
 
   const todayStr = useMemo(() => {
     const d = new Date();
@@ -80,9 +152,25 @@ export const NotaDebitTable = () => {
         if (statusCetakFilter === 'BELUM_DICETAK' && isTercetak) return false;
       }
 
+      // 4. Filter Tanggal Spesifik (YYYY-MM-DD)
+      if (selectedDate) {
+        if (item.tanggalND !== selectedDate) return false;
+      } else {
+        // 5. Filter Tahun & Bulan (jika tanggal spesifik tidak dipilih)
+        if (item.tanggalND) {
+          const parts = String(item.tanggalND).split('-');
+          const itemYear = parts[0];
+          const itemMonth = parts[1];
+          if (selectedYear !== 'ALL' && itemYear !== String(selectedYear)) return false;
+          if (selectedMonth !== 'ALL' && itemMonth !== selectedMonth) return false;
+        } else if (selectedYear !== 'ALL' || selectedMonth !== 'ALL') {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [notaDebit, searchTerm, prosesBisnisFilter, statusCetakFilter]);
+  }, [notaDebit, searchTerm, prosesBisnisFilter, statusCetakFilter, selectedYear, selectedMonth, selectedDate]);
 
   // Summary totals
   const totalND = filteredData.length;
@@ -175,7 +263,9 @@ export const NotaDebitTable = () => {
       // ── ROW 2: Sub-judul ──
       ws.mergeCells('A2:P2');
       const r2 = ws.getCell('A2');
-      r2.value = 'SEGMEN KLASIFIKASI TAHUN 2026';
+      r2.value = filterSummaryLabel
+        ? `SEGMEN KLASIFIKASI • ${filterSummaryLabel.toUpperCase()}`
+        : 'SEGMEN KLASIFIKASI TAHUN 2026';
       r2.font = { name: 'Arial', size: 10, bold: true, color: { argb: '374151' } };
       r2.alignment = CENTER;
       ws.getRow(2).height = 16;
@@ -564,13 +654,126 @@ export const NotaDebitTable = () => {
                   className="form-select"
                   value={statusCetakFilter}
                   onChange={(e) => setStatusCetakFilter(e.target.value)}
-                  style={{ height: '36px', fontSize: '0.8rem', padding: '0.2rem 0.5rem', minWidth: '150px' }}
+                  style={{ height: '36px', fontSize: '0.8rem', padding: '0.2rem 0.5rem', minWidth: '145px' }}
                 >
                   <option value="ALL">🖨️ Semua Status Cetak</option>
                   <option value="BELUM_DICETAK">⏳ Belum Dicetak</option>
                   <option value="TERCETAK">✅ Tercetak</option>
                 </select>
               </div>
+
+              {/* FILTER TAHUN */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <select
+                  className="form-select"
+                  value={selectedYear}
+                  onChange={(e) => {
+                    setSelectedYear(e.target.value);
+                    if (selectedDate) setSelectedDate('');
+                  }}
+                  style={{ height: '36px', fontSize: '0.8rem', padding: '0.2rem 0.5rem', minWidth: '120px' }}
+                  title="Filter Tahun"
+                >
+                  <option value="ALL">📅 Semua Tahun</option>
+                  {availableYears.map((yr) => (
+                    <option key={yr} value={yr}>
+                      Tahun {yr}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* FILTER BULAN */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <select
+                  className="form-select"
+                  value={selectedMonth}
+                  onChange={(e) => {
+                    setSelectedMonth(e.target.value);
+                    if (selectedDate) setSelectedDate('');
+                  }}
+                  style={{ height: '36px', fontSize: '0.8rem', padding: '0.2rem 0.5rem', minWidth: '130px' }}
+                  title="Filter Bulan"
+                >
+                  <option value="ALL">🗓️ Semua Bulan</option>
+                  {MONTH_OPTIONS.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* FILTER TANGGAL */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type="date"
+                    className="form-input"
+                    value={selectedDate}
+                    onChange={(e) => {
+                      setSelectedDate(e.target.value);
+                      if (e.target.value) {
+                        setSelectedYear('ALL');
+                        setSelectedMonth('ALL');
+                      }
+                    }}
+                    style={{
+                      height: '36px',
+                      fontSize: '0.8rem',
+                      padding: '0.2rem 0.5rem',
+                      paddingRight: selectedDate ? '1.8rem' : '0.5rem',
+                      minWidth: '135px'
+                    }}
+                    title="Pilih Tanggal Spesifik"
+                  />
+                  {selectedDate && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDate('')}
+                      style={{
+                        position: 'absolute',
+                        right: '6px',
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: 'var(--text-muted)'
+                      }}
+                      title="Hapus filter tanggal"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* RESET FILTER */}
+              {hasActiveFilter && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="btn btn-secondary btn-sm"
+                  style={{
+                    height: '36px',
+                    fontSize: '0.78rem',
+                    padding: '0.2rem 0.65rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                    color: '#ef4444',
+                    borderColor: '#fca5a5',
+                    background: '#fef2f2',
+                    fontWeight: 600
+                  }}
+                  title="Reset semua filter"
+                >
+                  <X size={14} />
+                  Reset Filter
+                </button>
+              )}
             </div>
 
             <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)' }}>
@@ -839,7 +1042,7 @@ export const NotaDebitTable = () => {
         isOpen={isDataControlPrintOpen}
         onClose={() => setIsDataControlPrintOpen(false)}
         data={filteredData}
-        filterLabel={prosesBisnisFilter !== 'ALL' ? prosesBisnisFilter : ''}
+        filterLabel={filterSummaryLabel}
       />
     </div>
   );
