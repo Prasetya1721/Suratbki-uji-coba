@@ -224,6 +224,22 @@ export const DataProvider = ({ children }) => {
     safeSetLocalStorage('st_nota_debit', notaDebit);
   }, [notaDebit]);
 
+  // Buku Agenda Nota Debit (Surat Pengantar)
+  const [agendaNotaDebit, setAgendaNotaDebit] = useState(() => {
+    const saved = localStorage.getItem('st_agenda_nota_debit');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {}
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    safeSetLocalStorage('st_agenda_nota_debit', agendaNotaDebit);
+  }, [agendaNotaDebit]);
+
   // Sinkronisasi otomatis dokumen jika nama pengguna/surveyor diubah
   useEffect(() => {
     const handleUserRenamed = (e) => {
@@ -938,6 +954,110 @@ export const DataProvider = ({ children }) => {
       safeSetLocalStorage('st_nota_debit', updated);
       return updated;
     });
+  };
+
+  // ====== BUKU AGENDA NOTA DEBIT (SURAT PENGANTAR) ======
+  const addAgendaNotaDebit = (data) => {
+    const newItem = {
+      ...data,
+      id: data.id || `AGND-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      tanggalSurat: data.tanggalSurat || new Date().toISOString().split('T')[0],
+      nomorSurat: (data.nomorSurat || '').trim(),
+      namaPerusahaan: (data.namaPerusahaan || '').trim().toUpperCase(),
+      alamat: (data.alamat || '').trim().toUpperCase(),
+      telepon: (data.telepon || '').trim(),
+      kota: (data.kota || 'PONTIANAK').trim().toUpperCase(),
+      noResi: (data.noResi || '').trim(),
+      items: Array.isArray(data.items) ? data.items : [],
+      totalNominal: Number(data.totalNominal) || 0,
+      keteranganLain: data.keteranganLain || '',
+      createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    // OTOMATIS TERCETAK: Tandai setiap nota debit yang masuk ke agenda sebagai 'Tercetak'
+    if (Array.isArray(newItem.items) && newItem.items.length > 0) {
+      setNotaDebit((prev) =>
+        prev.map((nd) => {
+          const isMatched = newItem.items.some(
+            (it) =>
+              (it.notaDebitId && String(it.notaDebitId) === String(nd.id)) ||
+              (it.nomorInvoice && (it.nomorInvoice || '').trim().toUpperCase() === (nd.nomorInvoice || '').trim().toUpperCase()) ||
+              (it.noSeri && String(it.noSeri).trim() === String(nd.noSeriFormND || '').trim())
+          );
+          if (isMatched) {
+            return { ...nd, keterangan: 'Tercetak' };
+          }
+          return nd;
+        })
+      );
+    }
+
+    setAgendaNotaDebit((prev) => [newItem, ...prev]);
+    return newItem;
+  };
+
+  const updateAgendaNotaDebit = (id, updatedData) => {
+    setAgendaNotaDebit((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              ...updatedData,
+              namaPerusahaan: (updatedData.namaPerusahaan || item.namaPerusahaan || '').toUpperCase(),
+              alamat: (updatedData.alamat || item.alamat || '').toUpperCase(),
+              kota: (updatedData.kota || item.kota || 'PONTIANAK').toUpperCase(),
+              items: Array.isArray(updatedData.items) ? updatedData.items : item.items,
+              totalNominal: updatedData.totalNominal !== undefined ? Number(updatedData.totalNominal) : item.totalNominal,
+              updatedAt: new Date().toISOString()
+            }
+          : item
+      )
+    );
+
+    // OTOMATIS TERCETAK: Tandai setiap nota debit yang masuk ke agenda sebagai 'Tercetak'
+    if (Array.isArray(updatedData.items) && updatedData.items.length > 0) {
+      setNotaDebit((prev) =>
+        prev.map((nd) => {
+          const isMatched = updatedData.items.some(
+            (it) =>
+              (it.notaDebitId && String(it.notaDebitId) === String(nd.id)) ||
+              (it.nomorInvoice && (it.nomorInvoice || '').trim().toUpperCase() === (nd.nomorInvoice || '').trim().toUpperCase()) ||
+              (it.noSeri && String(it.noSeri).trim() === String(nd.noSeriFormND || '').trim())
+          );
+          if (isMatched) {
+            return { ...nd, keterangan: 'Tercetak' };
+          }
+          return nd;
+        })
+      );
+    }
+  };
+
+  const deleteAgendaNotaDebit = (id) => {
+    const agendaToDelete = agendaNotaDebit.find((a) => a.id === id);
+    setAgendaNotaDebit((prev) => {
+      const updated = prev.filter((item) => String(item.id) !== String(id));
+      safeSetLocalStorage('st_agenda_nota_debit', updated);
+      return updated;
+    });
+
+    // Jika agenda dihapus, kembalikan status nota debit yang terkait ke 'Belum Dicetak' jika tidak ada di agenda lain
+    if (agendaToDelete && Array.isArray(agendaToDelete.items)) {
+      setNotaDebit((prev) =>
+        prev.map((nd) => {
+          const wasInDeleted = agendaToDelete.items.some(
+            (it) =>
+              (it.notaDebitId && String(it.notaDebitId) === String(nd.id)) ||
+              (it.nomorInvoice && (it.nomorInvoice || '').trim().toUpperCase() === (nd.nomorInvoice || '').trim().toUpperCase())
+          );
+          if (wasInDeleted) {
+            return { ...nd, keterangan: 'Belum Dicetak' };
+          }
+          return nd;
+        })
+      );
+    }
   };
 
   // ====== 1. ADMIN INPUT SPS (Batch or Single Ship) ======
@@ -1706,6 +1826,10 @@ export const DataProvider = ({ children }) => {
         addNotaDebit,
         updateNotaDebit,
         deleteNotaDebit,
+        agendaNotaDebit,
+        addAgendaNotaDebit,
+        updateAgendaNotaDebit,
+        deleteAgendaNotaDebit,
         updateAdminSettings,
         addTariff,
         updateTariff,

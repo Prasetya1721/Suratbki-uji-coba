@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Receipt, Plus, Search, Edit2, Trash2, FileSpreadsheet, TrendingUp, FileText, Printer, BarChart3, Filter, CheckCircle2, Clock, Calendar, X
+  Receipt, Plus, Search, Edit2, Trash2, FileSpreadsheet, TrendingUp, FileText, Printer, BarChart3, Filter, CheckCircle2, Clock, Calendar, X, BookOpen, Ship, Truck
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { useData } from '../context/DataContext';
@@ -9,6 +9,9 @@ import { NotaDebitModal } from './NotaDebitModal';
 import { TandaTerimaNotaDebitModal } from './TandaTerimaNotaDebitModal';
 import { DataControlNotaDebitPrintModal } from './DataControlNotaDebitPrintModal';
 import { ProsesBisnisReport } from './ProsesBisnisReport';
+import { AgendaNotaDebitModal } from './AgendaNotaDebitModal';
+import { SuratPengantarPrintModal } from './SuratPengantarPrintModal';
+import { BukuAgendaNotaDebitView } from './BukuAgendaNotaDebitView';
 import {
   KATEGORI_PROSES_BISNIS,
   PROSES_BISNIS_META,
@@ -38,7 +41,18 @@ const formatRp = (val) =>
     : 'Rp 0';
 
 export const NotaDebitTable = () => {
-  const { notaDebit = [], addNotaDebit, updateNotaDebit, deleteNotaDebit, adminSettings } = useData();
+  const {
+    notaDebit = [],
+    addNotaDebit,
+    updateNotaDebit,
+    deleteNotaDebit,
+    agendaNotaDebit = [],
+    addAgendaNotaDebit,
+    updateAgendaNotaDebit,
+    deleteAgendaNotaDebit,
+    adminSettings,
+    getCompanyAddress
+  } = useData();
   const { role } = useAuth();
 
   const defaultPpnRate = adminSettings?.ppnRate !== undefined ? Number(adminSettings.ppnRate) : 11;
@@ -63,6 +77,12 @@ export const NotaDebitTable = () => {
 
   // Modal Print PDF Data Control Nota Debit
   const [isDataControlPrintOpen, setIsDataControlPrintOpen] = useState(false);
+
+  // Modal Buku Agenda & Surat Pengantar
+  const [isAgendaModalOpen, setIsAgendaModalOpen] = useState(false);
+  const [editingAgendaItem, setEditingAgendaItem] = useState(null);
+  const [isSuratPengantarPrintOpen, setIsSuratPengantarPrintOpen] = useState(false);
+  const [suratPengantarPrintData, setSuratPengantarPrintData] = useState(null);
 
   // Daftar tahun yang tersedia
   const availableYears = useMemo(() => {
@@ -505,7 +525,7 @@ export const NotaDebitTable = () => {
           borderRadius: '12px'
         }}
       >
-        <div style={{ display: 'inline-flex', background: 'var(--bg-main, #f1f5f9)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+        <div style={{ display: 'inline-flex', background: 'var(--bg-main, #f1f5f9)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', flexWrap: 'wrap', gap: '3px' }}>
           <button
             type="button"
             onClick={() => setActiveTab('data_control')}
@@ -532,6 +552,20 @@ export const NotaDebitTable = () => {
             <BarChart3 size={15} />
             <span>Rekap Proses Bisnis / Potensi Produksi</span>
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('buku_agenda')}
+            style={{
+              padding: '0.42rem 1rem', fontSize: '0.82rem', fontWeight: 700, borderRadius: '6px', border: 'none',
+              cursor: 'pointer', transition: 'all 0.15s ease',
+              background: activeTab === 'buku_agenda' ? '#0284c7' : 'transparent',
+              color: activeTab === 'buku_agenda' ? '#ffffff' : 'var(--text-secondary)',
+              display: 'inline-flex', alignItems: 'center', gap: '0.35rem'
+            }}
+          >
+            <BookOpen size={15} />
+            <span>Buku Agenda Nota Debit ({agendaNotaDebit.length})</span>
+          </button>
         </div>
 
         {activeTab === 'data_control' && canEdit && (
@@ -545,11 +579,29 @@ export const NotaDebitTable = () => {
             <span>Tambah Nota Debit</span>
           </button>
         )}
+
+        {activeTab === 'buku_agenda' && canEdit && (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => { setEditingAgendaItem(null); setIsAgendaModalOpen(true); }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 800, padding: '0.45rem 1rem', fontSize: '0.84rem', background: '#0284c7', borderColor: '#0284c7' }}
+          >
+            <Plus size={15} />
+            <span>Buat Surat Pengantar</span>
+          </button>
+        )}
       </div>
 
-      {/* JIKA TAB PROSES BISNIS DIPILIH */}
+      {/* JIKA TAB PROSES BISNIS ATAU BUKU AGENDA DIPILIH */}
       {activeTab === 'proses_bisnis' ? (
         <ProsesBisnisReport />
+      ) : activeTab === 'buku_agenda' ? (
+        <BukuAgendaNotaDebitView
+          onOpenCreate={() => { setEditingAgendaItem(null); setIsAgendaModalOpen(true); }}
+          onOpenEdit={(item) => { setEditingAgendaItem(item); setIsAgendaModalOpen(true); }}
+          onOpenPrint={(item) => { setSuratPengantarPrintData(item); setIsSuratPengantarPrintOpen(true); }}
+        />
       ) : (
         <div className="card">
           {/* ── HEADER ── */}
@@ -974,23 +1026,8 @@ export const NotaDebitTable = () => {
                                     <option value="Tercetak">✅ Tercetak</option>
                                   </select>
 
-                                  {/* TOMBOL AKSI: CETAK, EDIT, HAPUS */}
+                                  {/* TOMBOL AKSI: EDIT, HAPUS */}
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                                    <button
-                                      type="button"
-                                      className="btn btn-primary btn-sm btn-icon"
-                                      onClick={() => {
-                                        setPrintItem(item);
-                                        setIsPrintOpen(true);
-                                        if (!item.keterangan || item.keterangan === 'Belum Dicetak') {
-                                          updateNotaDebit(item.id, { keterangan: 'Tercetak' });
-                                        }
-                                      }}
-                                      title="Cetak Tanda Terima Dokumen"
-                                      style={{ padding: '0.25rem 0.45rem', background: '#0284c7', borderColor: '#0284c7', color: '#ffffff' }}
-                                    >
-                                      <Printer size={13} />
-                                    </button>
                                     <button
                                       type="button"
                                       className="btn btn-secondary btn-sm btn-icon"
@@ -1025,7 +1062,7 @@ export const NotaDebitTable = () => {
         </div>
       )}
 
-      {/* ── MODAL FORM ── */}
+      {/* ── MODAL FORM NOTA DEBIT ── */}
       <NotaDebitModal
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditingItem(null); }}
@@ -1034,7 +1071,44 @@ export const NotaDebitTable = () => {
         isEdit={Boolean(editingItem)}
       />
 
-      {/* ── MODAL PRINT TANDA TERIMA DOKUMEN ── */}
+      {/* ── MODAL FORM BUKU AGENDA (SURAT PENGANTAR) ── */}
+      <AgendaNotaDebitModal
+        isOpen={isAgendaModalOpen}
+        onClose={() => { setIsAgendaModalOpen(false); setEditingAgendaItem(null); }}
+        onSave={(data) => {
+          if (editingAgendaItem) {
+            updateAgendaNotaDebit(editingAgendaItem.id, data);
+            toast.success('Surat Pengantar berhasil diperbarui!');
+          } else {
+            addAgendaNotaDebit(data);
+            toast.success('Surat Pengantar berhasil disimpan ke Buku Agenda!');
+          }
+        }}
+        onSaveAndPrint={(data) => {
+          let savedItem;
+          if (editingAgendaItem) {
+            updateAgendaNotaDebit(editingAgendaItem.id, data);
+            savedItem = { ...editingAgendaItem, ...data };
+            toast.success('Surat Pengantar berhasil diperbarui!');
+          } else {
+            savedItem = addAgendaNotaDebit(data);
+            toast.success('Surat Pengantar berhasil disimpan ke Buku Agenda!');
+          }
+          setSuratPengantarPrintData(savedItem);
+          setIsSuratPengantarPrintOpen(true);
+        }}
+        initialData={editingAgendaItem}
+        isEdit={Boolean(editingAgendaItem)}
+      />
+
+      {/* ── MODAL PRINT SURAT PENGANTAR ── */}
+      <SuratPengantarPrintModal
+        isOpen={isSuratPengantarPrintOpen}
+        onClose={() => { setIsSuratPengantarPrintOpen(false); setSuratPengantarPrintData(null); }}
+        data={suratPengantarPrintData}
+      />
+
+      {/* ── MODAL PRINT TANDA TERIMA DOKUMEN LAMA (FALLBACK) ── */}
       <TandaTerimaNotaDebitModal
         isOpen={isPrintOpen}
         onClose={() => { setIsPrintOpen(false); setPrintItem(null); }}

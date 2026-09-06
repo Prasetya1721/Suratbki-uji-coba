@@ -509,13 +509,16 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
               {effectiveFilterType === 'PDS' && (pdsSubTab === 'LUAR' ? 'Daftar PDS Luar Negeri (USD)' : 'Daftar PDS Dalam Negeri')}
             </h2>
             <div className="card-subtitle">
-              Kelola penugasan marine surveyor, sortir multi-hari & multi-bulan operasional
+              {effectiveFilterType === 'SPS' && 'Kelola penugasan marine surveyor, sortir multi-hari & multi-bulan operasional'}
+              {effectiveFilterType === 'PDS_DALAM' && 'Kelola penugasan perjalanan dinas surveyor (PDS) domestik / dalam negeri'}
+              {effectiveFilterType === 'PDS_LUAR' && 'Kelola penugasan perjalanan dinas surveyor (PDS) internasional / mancanegara (USD)'}
+              {effectiveFilterType === 'PDS' && 'Kelola penugasan perjalanan dinas surveyor (PDS)'}
             </div>
-            {effectiveFilterType.startsWith('PDS') && (
+            {effectiveFilterType === 'PDS' && (
               <div style={{ display: 'inline-flex', background: 'var(--bg-main)', padding: '0.15rem', borderRadius: '6px', border: '1px solid var(--border-color)', gap: '0.2rem', marginTop: '0.4rem' }}>
                 <button
                   type="button"
-                  className={`btn btn-sm ${pdsSubTab === 'DALAM' && effectiveFilterType !== 'PDS_LUAR' ? 'btn-primary' : 'btn-secondary'}`}
+                  className={`btn btn-sm ${pdsSubTab === 'DALAM' ? 'btn-primary' : 'btn-secondary'}`}
                   onClick={() => setPdsSubTab('DALAM')}
                   style={{
                     fontSize: '0.74rem',
@@ -528,15 +531,15 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
                 </button>
                 <button
                   type="button"
-                  className={`btn btn-sm ${pdsSubTab === 'LUAR' || effectiveFilterType === 'PDS_LUAR' ? 'btn-primary' : 'btn-secondary'}`}
+                  className={`btn btn-sm ${pdsSubTab === 'LUAR' ? 'btn-primary' : 'btn-secondary'}`}
                   onClick={() => setPdsSubTab('LUAR')}
                   style={{
                     fontSize: '0.74rem',
                     padding: '0.15rem 0.6rem',
                     borderRadius: '4px',
                     fontWeight: 700,
-                    background: (pdsSubTab === 'LUAR' || effectiveFilterType === 'PDS_LUAR') ? '#0284c7' : undefined,
-                    borderColor: (pdsSubTab === 'LUAR' || effectiveFilterType === 'PDS_LUAR') ? '#0284c7' : undefined
+                    background: pdsSubTab === 'LUAR' ? '#0284c7' : undefined,
+                    borderColor: pdsSubTab === 'LUAR' ? '#0284c7' : undefined
                   }}
                 >
                   <Globe size={12} style={{ marginRight: '0.25rem' }} />
@@ -561,38 +564,63 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
             </button>
           )}
 
-          {/* Tombol Buat Baru: Surveyor / Admin / Kacab / Dev untuk SPS & PDS */}
-          {effectiveFilterType === 'SPS' ? (
-            canCreateSps && (
-              <button className="btn btn-primary" onClick={handleOpenAdd}>
-                <Plus size={16} />
-                <span>Buat SPS Baru</span>
+          {/* Tombol Buat Baru: Surveyor / Admin / Kacab / Dev untuk SPS & PDS (Cukup 1 tombol sesuai fungsi sidebar) */}
+          {effectiveFilterType === 'SPS' && canCreateSps && (
+            <button className="btn btn-primary" onClick={handleOpenAdd}>
+              <Plus size={16} />
+              <span>Buat SPS Baru</span>
+            </button>
+          )}
+
+          {effectiveFilterType === 'PDS_DALAM' && canCreatePds && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleOpenAddPdsDalam}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}
+              title="Buat PDS Baru Perjalanan Domestik"
+            >
+              <Plus size={16} />
+              <span>+ PDS Dalam Negeri</span>
+            </button>
+          )}
+
+          {effectiveFilterType === 'PDS_LUAR' && canCreatePds && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleOpenAddPdsLuar}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#0284c7', borderColor: '#0284c7', fontWeight: 800 }}
+              title="Buat PDS Baru Perjalanan Mancanegara (USD)"
+            >
+              <Globe size={16} />
+              <span>+ PDS Luar Negeri</span>
+            </button>
+          )}
+
+          {effectiveFilterType === 'PDS' && canCreatePds && (
+            pdsSubTab === 'LUAR' ? (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleOpenAddPdsLuar}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#0284c7', borderColor: '#0284c7', fontWeight: 800 }}
+                title="Buat PDS Baru Perjalanan Mancanegara (USD)"
+              >
+                <Globe size={16} />
+                <span>+ PDS Luar Negeri</span>
               </button>
-            )
-          ) : (
-            canCreatePds && (
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleOpenAddPdsDalam}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}
-                  title="Buat PDS Baru Perjalanan Domestik"
-                >
-                  <Plus size={15} />
-                  <span>+ PDS Dalam Negeri</span>
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleOpenAddPdsLuar}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#0284c7', borderColor: '#0284c7', fontWeight: 800 }}
-                  title="Buat PDS Baru Perjalanan Mancanegara (USD)"
-                >
-                  <Globe size={15} />
-                  <span>+ PDS Luar Negeri</span>
-                </button>
-              </div>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleOpenAddPdsDalam}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}
+                title="Buat PDS Baru Perjalanan Domestik"
+              >
+                <Plus size={16} />
+                <span>+ PDS Dalam Negeri</span>
+              </button>
             )
           )}
         </div>
@@ -708,8 +736,8 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
               <option value="kapal_desc">🚢 Nama Kapal (Z - A)</option>
               <option value="petugas_asc">👤 Surveyor (A - Z)</option>
               <option value="petugas_desc">👤 Surveyor (Z - A)</option>
-              {effectiveFilterType === 'PDS' && <option value="nomor_asc">📄 Nomor Surat (A - Z)</option>}
-              {effectiveFilterType === 'PDS' && <option value="nomor_desc">📄 Nomor Surat (Z - A)</option>}
+              {effectiveFilterType !== 'SPS' && <option value="nomor_asc">📄 Nomor Surat (A - Z)</option>}
+              {effectiveFilterType !== 'SPS' && <option value="nomor_desc">📄 Nomor Surat (Z - A)</option>}
             </select>
           </div>
         </div>

@@ -70,15 +70,36 @@ export const BiayaPdsLuarNegeriPrintModal = ({
 
   const totalUsd = Number(suratTugas.totalUsd) || (tiketLuarUsd + asalTujuanLuarUsd + totalUangHarianUsd + totalUangHotelUsd + totalHariLiburUsd + pakaianDinginUsd);
 
-  // Komponen Transit IDR
-  const tiketDlmIdr = Number(suratTugas.tiketDalamNegeri) || 0;
-  const asalTujuanDlmIdr = suratTugas.asalTujuanDlm !== undefined ? Number(suratTugas.asalTujuanDlm) : 750000;
-  const totalTransitIdr = Number(suratTugas.totalTransitIdr) || (tiketDlmIdr + asalTujuanDlmIdr);
+  // Status Dengan / Tanpa Dalam Negeri
+  const denganDalamNegeri = suratTugas.denganDalamNegeri !== undefined
+    ? !!suratTugas.denganDalamNegeri
+    : (Number(suratTugas.totalTransitIdr || suratTugas.asalTujuanDlm || suratTugas.tiketDalamNegeri) > 0 || !!suratTugas.tglMulaiTransit);
+
+  // Komponen Transit IDR (Lengkap Sesuai PDS Dalam Negeri)
+  const hrTransit = denganDalamNegeri ? (Number(suratTugas.hrTransit) || 0) : 0;
+  const mlmTransit = denganDalamNegeri ? (Number(suratTugas.mlmTransit) || 0) : 0;
+  const hrLbrTransit = denganDalamNegeri ? (Number(suratTugas.jumlahHariLiburTransit) || 0) : 0;
+  const rateUangHarianDlm = denganDalamNegeri ? (Number(suratTugas.uangHarianDlmRate) || 0) : 0;
+  const totalUangHarianDlm = denganDalamNegeri ? (Number(suratTugas.totalUangHarianDlm) || (hrTransit * rateUangHarianDlm)) : 0;
+  const rateHotelDlm = denganDalamNegeri ? (Number(suratTugas.uangHotelDlmRate) || 0) : 0;
+  const totalHotelDlm = denganDalamNegeri ? (Number(suratTugas.totalUangHotelDlm) || (mlmTransit * rateHotelDlm)) : 0;
+  const totalHrLiburDlm = denganDalamNegeri ? (Number(suratTugas.totalHrLiburDlm) || (hrLbrTransit * rateUangHarianDlm * 0.5)) : 0;
+
+  const tiketDlmIdr = denganDalamNegeri ? (Number(suratTugas.tiketDalamNegeri) || 0) : 0;
+  const asalTujuanDlmIdr = denganDalamNegeri ? (suratTugas.asalTujuanDlm !== undefined ? Number(suratTugas.asalTujuanDlm) : 750000) : 0;
+
+  const totalTransitIdr = denganDalamNegeri
+    ? (suratTugas.totalTransitIdr !== undefined
+        ? Number(suratTugas.totalTransitIdr)
+        : (totalUangHarianDlm + totalHotelDlm + totalHrLiburDlm + tiketDlmIdr + asalTujuanDlmIdr))
+    : 0;
 
   // Kurs & Konversi
   const kurs = Number(suratTugas.kursUsd) || 16640;
   const konversiUsdKeIdr = Number(suratTugas.konversiUsdKeIdr) || Math.round(totalUsd * kurs);
-  const grandTotalIdr = Number(suratTugas.totalIdrTerima) || Number(suratTugas.jumlahEstimasi) || (konversiUsdKeIdr + totalTransitIdr);
+  const grandTotalIdr = denganDalamNegeri
+    ? (Number(suratTugas.totalIdrTerima) || Number(suratTugas.jumlahEstimasi) || (konversiUsdKeIdr + totalTransitIdr))
+    : konversiUsdKeIdr;
 
   const keteranganKhusus = suratTugas.keteranganLain || 'TIKET, HOTEL DAN TAT DI LUAR NEGERI DITANGGUNG PEMOHON';
 
@@ -146,25 +167,25 @@ export const BiayaPdsLuarNegeriPrintModal = ({
 
       // Set lebar kolom yang proporsional & cukup luas agar tidak ada teks terpotong
       worksheet.columns = [
-        { key: 'col1', width: 7 },    // A: NO
-        { key: 'col2', width: 28 },   // B: NAMA SURVEYOR
-        { key: 'col3', width: 6 },    // C: HR
-        { key: 'col4', width: 6 },    // D: MLM
-        { key: 'col5', width: 8 },    // E: HR LBR
-        { key: 'col6', width: 18 },   // F: TGL BERANGKAT
-        { key: 'col7', width: 18 },   // G: TGL KEMBALI
-        { key: 'col8', width: 16 },   // H: TIKET PESAWAT
-        { key: 'col9', width: 16 },   // I: ASAL TUJUAN DLM
-        { key: 'col10', width: 16 },  // J: ASAL TUJUAN LUAR
-        { key: 'col11', width: 11 },  // K: U.HR 11
-        { key: 'col12', width: 14 },  // L: TOTAL U.HR 12
-        { key: 'col13', width: 11 },  // M: HOTEL 13
-        { key: 'col14', width: 14 },  // N: TOTAL HOTEL 14
-        { key: 'col15', width: 14 },  // O: HR LBR 15
-        { key: 'col16', width: 12 },  // P: PAKAIAN DINGIN 16
-        { key: 'col17', width: 16 },  // Q: JUMLAH USD 17
-        { key: 'col18', width: 18 },  // R: JUMLAH TERIMA 18
-        { key: 'col19', width: 16 }   // S: TANDA TERIMA 19
+        { key: 'col1',  width: 7  },  // A:  NO
+        { key: 'col2',  width: 22 },  // B:  NAMA SURVEYOR
+        { key: 'col3',  width: 6  },  // C:  HR
+        { key: 'col4',  width: 6  },  // D:  MLM
+        { key: 'col5',  width: 8  },  // E:  HR LBR
+        { key: 'col6',  width: 16 },  // F:  TGL BERANGKAT
+        { key: 'col7',  width: 16 },  // G:  TGL KEMBALI
+        { key: 'col8',  width: 14 },  // H:  TIKET PESAWAT
+        { key: 'col9',  width: 14 },  // I:  ASAL TUJUAN DLM
+        { key: 'col10', width: 14 },  // J:  ASAL TUJUAN LUAR
+        { key: 'col11', width: 10 },  // K:  U.HR 11
+        { key: 'col12', width: 13 },  // L:  TOTAL U.HR 12
+        { key: 'col13', width: 10 },  // M:  HOTEL 13
+        { key: 'col14', width: 13 },  // N:  TOTAL HOTEL 14
+        { key: 'col15', width: 13 },  // O:  HR LBR 15
+        { key: 'col16', width: 11 },  // P:  PAKAIAN DINGIN 16
+        { key: 'col17', width: 14 },  // Q:  JUMLAH USD 17
+        { key: 'col18', width: 16 },  // R:  JUMLAH TERIMA 18
+        { key: 'col19', width: 14 }   // S:  TANDA TERIMA 19
       ];
 
       // ====== 1. HEADER DOKUMEN (Rows 1-4) ======
@@ -300,96 +321,173 @@ export const BiayaPdsLuarNegeriPrintModal = ({
         cell.border = thinBorder;
       });
 
-      // ====== 3. DATA ROWS (Rows 9, 10, 11) ======
-      // Row 9: Data Komponen Luar Negeri (USD)
-      const rowLN = worksheet.addRow([
-        1,
-        namaSurveyor,
-        hr,
-        mlm,
-        hrLbr > 0 ? hrLbr : '-',
-        tglMulaiStr,
-        tglSelesaiStr,
-        tiketLuarUsd > 0 ? tiketLuarUsd : '-',
-        '-',
-        asalTujuanLuarUsd > 0 ? asalTujuanLuarUsd : 0,
-        rateUangHarianUsd,
-        totalUangHarianUsd,
-        rateUangHotelUsd > 0 ? rateUangHotelUsd : '-',
-        totalUangHotelUsd > 0 ? totalUangHotelUsd : '-',
-        totalHariLiburUsd > 0 ? totalHariLiburUsd : '-',
-        pakaianDinginUsd > 0 ? pakaianDinginUsd : '-',
-        totalUsd,
-        grandTotalIdr,
-        ''
-      ]);
-      rowLN.height = 24;
+      // ====== 3. DATA ROWS ======
+      if (denganDalamNegeri) {
+        // Row 9: Data Komponen Luar Negeri (USD)
+        const rowLN = worksheet.addRow([
+          1,
+          namaSurveyor,
+          hr,
+          mlm,
+          hrLbr > 0 ? hrLbr : '-',
+          tglMulaiStr,
+          tglSelesaiStr,
+          tiketLuarUsd > 0 ? tiketLuarUsd : '-',
+          '-',
+          asalTujuanLuarUsd > 0 ? asalTujuanLuarUsd : 0,
+          rateUangHarianUsd,
+          totalUangHarianUsd,
+          rateUangHotelUsd > 0 ? rateUangHotelUsd : '-',
+          totalUangHotelUsd > 0 ? totalUangHotelUsd : '-',
+          totalHariLiburUsd > 0 ? totalHariLiburUsd : '-',
+          pakaianDinginUsd > 0 ? pakaianDinginUsd : '-',
+          totalUsd,
+          grandTotalIdr,
+          ''
+        ]);
+        rowLN.height = 24;
 
-      // Row 10: Banner DALAM NEGERI (Hijau Penuh Kolom C sampai Q)
-      const rowBanner = worksheet.addRow([]);
-      rowBanner.height = 20;
-      rowBanner.getCell(3).value = 'DALAM NEGERI';
+        // Row 10: Banner DALAM NEGERI (Hijau Penuh Kolom C sampai Q)
+        const rowBanner = worksheet.addRow([]);
+        rowBanner.height = 20;
+        rowBanner.getCell(3).value = 'DALAM NEGERI';
 
-      // Row 11: Data Transit Dalam Negeri (IDR)
-      const rowDN = worksheet.addRow([
-        '', '',
-        '-', '-', '-',
-        tglTransitMulaiStr,
-        tglTransitSelesaiStr,
-        tiketDlmIdr > 0 ? tiketDlmIdr : '-',
-        asalTujuanDlmIdr,
-        '-',
-        '-', '-', '-', '-', '-', '-',
-        totalTransitIdr,
-        '', ''
-      ]);
-      rowDN.height = 24;
+        // Row 11: Data Transit Dalam Negeri (IDR)
+        const rowDN = worksheet.addRow([
+          '', '',
+          hrTransit > 0 ? hrTransit : '-',
+          mlmTransit > 0 ? mlmTransit : '-',
+          hrLbrTransit > 0 ? hrLbrTransit : '-',
+          tglTransitMulaiStr,
+          tglTransitSelesaiStr,
+          tiketDlmIdr > 0 ? tiketDlmIdr : '-',
+          asalTujuanDlmIdr > 0 ? asalTujuanDlmIdr : '-',
+          '-',
+          rateUangHarianDlm > 0 ? rateUangHarianDlm : '-',
+          totalUangHarianDlm > 0 ? totalUangHarianDlm : '-',
+          rateHotelDlm > 0 ? rateHotelDlm : '-',
+          totalHotelDlm > 0 ? totalHotelDlm : '-',
+          totalHrLiburDlm > 0 ? totalHrLiburDlm : '-',
+          '-',
+          totalTransitIdr,
+          '', ''
+        ]);
+        rowDN.height = 24;
 
-      // Merging data rows persis seperti dokumen cetak fisik
-      worksheet.mergeCells(`A${rowLN.number}:A${rowDN.number}`); // No. (1)
-      worksheet.mergeCells(`B${rowLN.number}:B${rowDN.number}`); // Nama Surveyor
-      worksheet.mergeCells(`C${rowBanner.number}:Q${rowBanner.number}`); // Banner hijau DALAM NEGERI sepanjang kolom C-Q
-      worksheet.mergeCells(`R${rowLN.number}:R${rowDN.number}`); // Grand Total Terima
-      worksheet.mergeCells(`S${rowLN.number}:S${rowDN.number}`); // Tanda Terima
+        // Merging data rows persis seperti dokumen cetak fisik
+        worksheet.mergeCells(`A${rowLN.number}:A${rowDN.number}`); // No. (1)
+        worksheet.mergeCells(`B${rowLN.number}:B${rowDN.number}`); // Nama Surveyor
+        worksheet.mergeCells(`C${rowBanner.number}:Q${rowBanner.number}`); // Banner hijau DALAM NEGERI sepanjang kolom C-Q
+        worksheet.mergeCells(`R${rowLN.number}:R${rowDN.number}`); // Grand Total Terima
+        worksheet.mergeCells(`S${rowLN.number}:S${rowDN.number}`); // Tanda Terima
 
-      // Berikan style, font, dan border pada semua cell data
-      for (let r = rowLN.number; r <= rowDN.number; r++) {
-        const rowObj = worksheet.getRow(r);
+        // Berikan style, font, dan border pada semua cell data
+        for (let r = rowLN.number; r <= rowDN.number; r++) {
+          const rowObj = worksheet.getRow(r);
+          for (let c = 1; c <= 19; c++) {
+            const cell = rowObj.getCell(c);
+            cell.border = thinBorder;
+            cell.font = { name: 'Calibri', size: 9 };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          }
+        }
+
+        // Format khusus banner DALAM NEGERI
+        const cellBanner = worksheet.getCell(`C${rowBanner.number}`);
+        cellBanner.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF98C044' }
+        };
+        cellBanner.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
+        cellBanner.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        // Number formatting & font bold
+        rowLN.getCell(2).font = { name: 'Calibri', size: 9, bold: true };
+        rowLN.getCell(11).numFmt = '$#,##0';
+        rowLN.getCell(12).numFmt = '$#,##0';
+        rowLN.getCell(17).numFmt = '$#,##0';
+        rowLN.getCell(17).font = { name: 'Calibri', size: 9.5, bold: true };
+
+        const grandCell = worksheet.getCell(`R${rowLN.number}`);
+        grandCell.numFmt = '#,##0';
+        grandCell.font = { name: 'Calibri', size: 10, bold: true };
+        grandCell.alignment = { horizontal: 'right', vertical: 'middle' };
+
+        if (tiketDlmIdr > 0) {
+          rowDN.getCell(8).numFmt = '#,##0';
+          rowDN.getCell(8).alignment = { horizontal: 'right', vertical: 'middle' };
+        }
+        if (asalTujuanDlmIdr > 0) {
+          rowDN.getCell(9).numFmt = '#,##0';
+          rowDN.getCell(9).alignment = { horizontal: 'right', vertical: 'middle' };
+        }
+        if (rateUangHarianDlm > 0) {
+          rowDN.getCell(11).numFmt = '#,##0';
+          rowDN.getCell(11).alignment = { horizontal: 'right', vertical: 'middle' };
+        }
+        if (totalUangHarianDlm > 0) {
+          rowDN.getCell(12).numFmt = '#,##0';
+          rowDN.getCell(12).alignment = { horizontal: 'right', vertical: 'middle' };
+        }
+        if (rateHotelDlm > 0) {
+          rowDN.getCell(13).numFmt = '#,##0';
+          rowDN.getCell(13).alignment = { horizontal: 'right', vertical: 'middle' };
+        }
+        if (totalHotelDlm > 0) {
+          rowDN.getCell(14).numFmt = '#,##0';
+          rowDN.getCell(14).alignment = { horizontal: 'right', vertical: 'middle' };
+        }
+        if (totalHrLiburDlm > 0) {
+          rowDN.getCell(15).numFmt = '#,##0';
+          rowDN.getCell(15).alignment = { horizontal: 'right', vertical: 'middle' };
+        }
+        rowDN.getCell(17).numFmt = '#,##0';
+        rowDN.getCell(17).font = { name: 'Calibri', size: 9.5, bold: true };
+        rowDN.getCell(17).alignment = { horizontal: 'right', vertical: 'middle' };
+      } else {
+        // Tanpa Dalam Negeri: Hanya Row LN
+        const rowLN = worksheet.addRow([
+          1,
+          namaSurveyor,
+          hr,
+          mlm,
+          hrLbr > 0 ? hrLbr : '-',
+          tglMulaiStr,
+          tglSelesaiStr,
+          tiketLuarUsd > 0 ? tiketLuarUsd : '-',
+          '-',
+          asalTujuanLuarUsd > 0 ? asalTujuanLuarUsd : 0,
+          rateUangHarianUsd,
+          totalUangHarianUsd,
+          rateUangHotelUsd > 0 ? rateUangHotelUsd : '-',
+          totalUangHotelUsd > 0 ? totalUangHotelUsd : '-',
+          totalHariLiburUsd > 0 ? totalHariLiburUsd : '-',
+          pakaianDinginUsd > 0 ? pakaianDinginUsd : '-',
+          totalUsd,
+          grandTotalIdr,
+          ''
+        ]);
+        rowLN.height = 24;
+
         for (let c = 1; c <= 19; c++) {
-          const cell = rowObj.getCell(c);
+          const cell = rowLN.getCell(c);
           cell.border = thinBorder;
           cell.font = { name: 'Calibri', size: 9 };
           cell.alignment = { horizontal: 'center', vertical: 'middle' };
         }
+
+        rowLN.getCell(2).font = { name: 'Calibri', size: 9, bold: true };
+        rowLN.getCell(11).numFmt = '$#,##0';
+        rowLN.getCell(12).numFmt = '$#,##0';
+        rowLN.getCell(17).numFmt = '$#,##0';
+        rowLN.getCell(17).font = { name: 'Calibri', size: 9.5, bold: true };
+
+        const grandCell = rowLN.getCell(18);
+        grandCell.numFmt = '#,##0';
+        grandCell.font = { name: 'Calibri', size: 10, bold: true };
+        grandCell.alignment = { horizontal: 'right', vertical: 'middle' };
       }
-
-      // Format khusus banner DALAM NEGERI
-      const cellBanner = worksheet.getCell(`C${rowBanner.number}`);
-      cellBanner.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FF98C044' }
-      };
-      cellBanner.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF000000' } };
-      cellBanner.alignment = { horizontal: 'center', vertical: 'middle' };
-
-      // Number formatting & font bold
-      rowLN.getCell(2).font = { name: 'Calibri', size: 9, bold: true };
-      rowLN.getCell(11).numFmt = '$#,##0';
-      rowLN.getCell(12).numFmt = '$#,##0';
-      rowLN.getCell(17).numFmt = '$#,##0';
-      rowLN.getCell(17).font = { name: 'Calibri', size: 9.5, bold: true };
-
-      const grandCell = worksheet.getCell(`R${rowLN.number}`);
-      grandCell.numFmt = '#,##0';
-      grandCell.font = { name: 'Calibri', size: 10, bold: true };
-      grandCell.alignment = { horizontal: 'right', vertical: 'middle' };
-
-      rowDN.getCell(9).numFmt = '#,##0';
-      rowDN.getCell(9).alignment = { horizontal: 'right', vertical: 'middle' };
-      rowDN.getCell(17).numFmt = '#,##0';
-      rowDN.getCell(17).font = { name: 'Calibri', size: 9.5, bold: true };
-      rowDN.getCell(17).alignment = { horizontal: 'right', vertical: 'middle' };
 
       // ====== 4. FOOTER: KETERANGAN & BREAKDOWN KURS ======
       const rSpacing = worksheet.addRow([]);
@@ -462,106 +560,65 @@ export const BiayaPdsLuarNegeriPrintModal = ({
 
       // ====== 5. TANDA TANGAN ======
       const rSigSpacing = worksheet.addRow([]);
-      rSigSpacing.height = 16;
+      rSigSpacing.height = 14;
 
-      // Row s1: Header Jabatan
+      // Row s1: Header kiri "Mengetahui" & kanan tanggal
       const s1 = worksheet.addRow([]);
-      s1.height = 20;
+      s1.height = 18;
       s1.getCell(2).value = 'Mengetahui';
-      s1.getCell(2).font = { name: 'Calibri', size: 9.5, bold: true };
+      s1.getCell(2).font = { name: 'Calibri', size: 9, bold: true };
       s1.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-      worksheet.mergeCells(`B${s1.number}:F${s1.number}`);
+      worksheet.mergeCells(`B${s1.number}:G${s1.number}`);
 
-      s1.getCell(13).value = `PONTIANAK, ${tglMulaiStr}`;
-      s1.getCell(13).font = { name: 'Calibri', size: 9.5, bold: true };
-      s1.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
-      worksheet.mergeCells(`M${s1.number}:R${s1.number}`);
+      s1.getCell(15).value = `PONTIANAK, ${tglMulaiStr}`;
+      s1.getCell(15).font = { name: 'Calibri', size: 9, bold: true };
+      s1.getCell(15).alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.mergeCells(`O${s1.number}:S${s1.number}`);
 
-      // Row s2: Deskripsi Jabatan
+      // Row s2: Jabatan kiri & kanan
       const s2 = worksheet.addRow([]);
-      s2.height = 20;
+      s2.height = 18;
       s2.getCell(2).value = 'Kepala Cabang Madya Klas Pontianak';
-      s2.getCell(2).font = { name: 'Calibri', size: 9.5, bold: true };
+      s2.getCell(2).font = { name: 'Calibri', size: 9, bold: true };
       s2.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-      worksheet.mergeCells(`B${s2.number}:F${s2.number}`);
+      worksheet.mergeCells(`B${s2.number}:G${s2.number}`);
 
-      s2.getCell(13).value = 'Pembuat Daftar';
-      s2.getCell(13).font = { name: 'Calibri', size: 9.5, bold: true };
-      s2.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
-      worksheet.mergeCells(`M${s2.number}:R${s2.number}`);
+      s2.getCell(15).value = 'Pembuat Daftar';
+      s2.getCell(15).font = { name: 'Calibri', size: 9, bold: true };
+      s2.getCell(15).alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.mergeCells(`O${s2.number}:S${s2.number}`);
 
-      // Rows gap: Ruang Tanda Tangan
-      for (let i = 0; i < 3; i++) {
+      // 4 baris kosong ruang tanda tangan
+      for (let i = 0; i < 4; i++) {
         const gap = worksheet.addRow([]);
-        gap.height = 18;
+        gap.height = 16;
       }
 
-      // Row s3: Nama Penandatangan
+      // Row s3: Nama penandatangan
       const s3 = worksheet.addRow([]);
-      s3.height = 20;
+      s3.height = 18;
       s3.getCell(2).value = kepalaCabang;
-      s3.getCell(2).font = { name: 'Calibri', size: 10, bold: true, underline: true };
+      s3.getCell(2).font = { name: 'Calibri', size: 9.5, bold: true, underline: true };
       s3.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-      worksheet.mergeCells(`B${s3.number}:F${s3.number}`);
+      worksheet.mergeCells(`B${s3.number}:G${s3.number}`);
 
-      s3.getCell(13).value = pembuatName;
-      s3.getCell(13).font = { name: 'Calibri', size: 10, bold: true, underline: true };
-      s3.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
-      worksheet.mergeCells(`M${s3.number}:R${s3.number}`);
+      s3.getCell(15).value = pembuatName;
+      s3.getCell(15).font = { name: 'Calibri', size: 9.5, bold: true, underline: true };
+      s3.getCell(15).alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.mergeCells(`O${s3.number}:S${s3.number}`);
 
       // Row s4: NUP
       const s4 = worksheet.addRow([]);
-      s4.height = 18;
+      s4.height = 16;
       s4.getCell(2).value = `NUP.${nup}`;
-      s4.getCell(2).font = { name: 'Calibri', size: 9 };
+      s4.getCell(2).font = { name: 'Calibri', size: 8.5 };
       s4.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-      worksheet.mergeCells(`B${s4.number}:F${s4.number}`);
+      worksheet.mergeCells(`B${s4.number}:G${s4.number}`);
 
-      s4.getCell(13).value = `NUP.${pembuatDesc.replace(/^NUP\.?\s*/i, '')}`;
-      s4.getCell(13).font = { name: 'Calibri', size: 9 };
-      s4.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
-      worksheet.mergeCells(`M${s4.number}:R${s4.number}`);
-
-      // Opsional: Sematkan gambar TTD jika checkbox tanda tangan aktif
-      if (withSignature) {
-        try {
-          if (kacabSignature && isValidSignature(kacabSignature)) {
-            const resp = await fetch(kacabSignature);
-            if (resp.ok) {
-              const buffer = await resp.arrayBuffer();
-              const imageId = workbook.addImage({
-                buffer: buffer,
-                extension: 'png'
-              });
-              worksheet.addImage(imageId, {
-                tl: { col: 2.2, row: s2.number + 0.1 },
-                ext: { width: 140, height: 50 }
-              });
-            }
-          }
-        } catch (errSig) {
-          console.warn('Excel kacab signature embed fallback:', errSig);
-        }
-
-        try {
-          if (pembuatSignature && isValidSignature(pembuatSignature)) {
-            const resp = await fetch(pembuatSignature);
-            if (resp.ok) {
-              const buffer = await resp.arrayBuffer();
-              const imageId = workbook.addImage({
-                buffer: buffer,
-                extension: 'png'
-              });
-              worksheet.addImage(imageId, {
-                tl: { col: 13.8, row: s2.number + 0.1 },
-                ext: { width: 140, height: 50 }
-              });
-            }
-          }
-        } catch (errSig) {
-          console.warn('Excel pembuat signature embed fallback:', errSig);
-        }
-      }
+      s4.getCell(15).value = `NUP.${pembuatDesc.replace(/^NUP\.?\s*/i, '')}`;
+      s4.getCell(15).font = { name: 'Calibri', size: 8.5 };
+      s4.getCell(15).alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.mergeCells(`O${s4.number}:S${s4.number}`);
 
       // Render dan download
       const buffer = await workbook.xlsx.writeBuffer();
@@ -836,8 +893,8 @@ export const BiayaPdsLuarNegeriPrintModal = ({
                   <tbody>
                     {/* BARIS 1: DATA LUAR NEGERI (USD) */}
                     <tr>
-                      <td rowSpan={3} style={{ border: '1px solid black', padding: '6px 2px', fontWeight: 'bold' }}>1</td>
-                      <td rowSpan={3} style={{ border: '1px solid black', padding: '6px 3px', textAlign: 'center', fontWeight: 'bold', fontSize: '8pt', lineHeight: '1.25' }}>
+                      <td rowSpan={denganDalamNegeri ? 3 : 1} style={{ border: '1px solid black', padding: '6px 2px', fontWeight: 'bold' }}>1</td>
+                      <td rowSpan={denganDalamNegeri ? 3 : 1} style={{ border: '1px solid black', padding: '6px 3px', textAlign: 'center', fontWeight: 'bold', fontSize: '8pt', lineHeight: '1.25' }}>
                         {namaSurveyor}
                       </td>
                       <td style={{ border: '1px solid black', padding: '5px 2px' }}>{hr}</td>
@@ -857,39 +914,58 @@ export const BiayaPdsLuarNegeriPrintModal = ({
                       <td style={{ border: '1px solid black', padding: '5px 2px', textAlign: 'right', fontWeight: 'bold' }}>
                         ${fmtUsd(totalUsd)}
                       </td>
-                      <td rowSpan={3} style={{ border: '1px solid black', padding: '6px 4px', textAlign: 'right', fontWeight: 'bold', fontSize: '9pt' }}>
+                      <td rowSpan={denganDalamNegeri ? 3 : 1} style={{ border: '1px solid black', padding: '6px 4px', textAlign: 'right', fontWeight: 'bold', fontSize: '9pt' }}>
                         {fmtNum(grandTotalIdr)}
                       </td>
-                      <td rowSpan={3} style={{ border: '1px solid black', padding: '6px 2px' }}></td>
+                      <td rowSpan={denganDalamNegeri ? 3 : 1} style={{ border: '1px solid black', padding: '6px 2px' }}></td>
                     </tr>
 
-                    {/* BARIS 2: BANNER DALAM NEGERI (WARNA HIJAU) */}
-                    <tr>
-                      <td colSpan={15} style={{ border: '1px solid black', background: '#98c044', color: '#000000', fontWeight: 'bold', letterSpacing: '0.05em', padding: '3px' }}>
-                        DALAM NEGERI
-                      </td>
-                    </tr>
+                    {/* JIKA DENGAN DALAM NEGERI: RENDER BARIS 2 (BANNER) & BARIS 3 (DATA TRANSIT IDR) */}
+                    {denganDalamNegeri && (
+                      <>
+                        {/* BARIS 2: BANNER DALAM NEGERI (WARNA HIJAU) */}
+                        <tr>
+                          <td colSpan={15} style={{ border: '1px solid black', background: '#98c044', color: '#000000', fontWeight: 'bold', letterSpacing: '0.05em', padding: '3px' }}>
+                            DALAM NEGERI
+                          </td>
+                        </tr>
 
-                    {/* BARIS 3: DATA TRANSIT DALAM NEGERI (IDR) */}
-                    <tr>
-                      <td style={{ border: '1px solid black', padding: '5px 2px' }}>-</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px' }}>-</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px' }}>-</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px', fontSize: '7.5pt' }}>{tglTransitMulaiStr}</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px', fontSize: '7.5pt' }}>{tglTransitSelesaiStr}</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px' }}>{tiketDlmIdr > 0 ? fmtNum(tiketDlmIdr) : '-'}</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px', textAlign: 'right' }}>{fmtNum(asalTujuanDlmIdr)}</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px' }}>-</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px' }}>-</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px' }}>-</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px' }}>-</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px' }}>-</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px' }}>-</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px' }}>-</td>
-                      <td style={{ border: '1px solid black', padding: '5px 2px', textAlign: 'right', fontWeight: 'bold' }}>
-                        {fmtNum(totalTransitIdr)}
-                      </td>
-                    </tr>
+                        {/* BARIS 3: DATA TRANSIT DALAM NEGERI (IDR) */}
+                        <tr>
+                          <td style={{ border: '1px solid black', padding: '5px 2px' }}>{hrTransit > 0 ? hrTransit : '-'}</td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px' }}>{mlmTransit > 0 ? mlmTransit : '-'}</td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px' }}>{hrLbrTransit > 0 ? hrLbrTransit : '-'}</td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px', fontSize: '7.5pt' }}>{tglTransitMulaiStr}</td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px', fontSize: '7.5pt' }}>{tglTransitSelesaiStr}</td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px', textAlign: tiketDlmIdr > 0 ? 'right' : 'center' }}>
+                            {tiketDlmIdr > 0 ? fmtNum(tiketDlmIdr) : '-'}
+                          </td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px', textAlign: asalTujuanDlmIdr > 0 ? 'right' : 'center' }}>
+                            {asalTujuanDlmIdr > 0 ? fmtNum(asalTujuanDlmIdr) : '-'}
+                          </td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px' }}>-</td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px', textAlign: rateUangHarianDlm > 0 ? 'right' : 'center' }}>
+                            {rateUangHarianDlm > 0 ? fmtNum(rateUangHarianDlm) : '-'}
+                          </td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px', textAlign: totalUangHarianDlm > 0 ? 'right' : 'center' }}>
+                            {totalUangHarianDlm > 0 ? fmtNum(totalUangHarianDlm) : '-'}
+                          </td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px', textAlign: rateHotelDlm > 0 ? 'right' : 'center' }}>
+                            {rateHotelDlm > 0 ? fmtNum(rateHotelDlm) : '-'}
+                          </td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px', textAlign: totalHotelDlm > 0 ? 'right' : 'center' }}>
+                            {totalHotelDlm > 0 ? fmtNum(totalHotelDlm) : '-'}
+                          </td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px', textAlign: totalHrLiburDlm > 0 ? 'right' : 'center' }}>
+                            {totalHrLiburDlm > 0 ? fmtNum(totalHrLiburDlm) : '-'}
+                          </td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px' }}>-</td>
+                          <td style={{ border: '1px solid black', padding: '5px 2px', textAlign: 'right', fontWeight: 'bold' }}>
+                            {fmtNum(totalTransitIdr)}
+                          </td>
+                        </tr>
+                      </>
+                    )}
                   </tbody>
                 </table>
 
