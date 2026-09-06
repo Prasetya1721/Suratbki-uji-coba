@@ -777,65 +777,65 @@ export const BiayaPdsPrintModal = ({
               </table>
 
               {/* Signature Block */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', marginTop: '2.5rem', breakInside: 'avoid', fontSize: '9.5pt' }}>
-                <div style={{ textAlign: 'center', width: '320px', position: 'relative' }}>
-                  <div style={{ marginBottom: '0.2rem' }}>Mengetahui</div>
-                  <div style={{ fontWeight: 'bold' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', marginTop: '1.75rem', breakInside: 'avoid', fontSize: '9pt' }}>
+                <div style={{ textAlign: 'center', width: '280px', position: 'relative' }}>
+                  <div style={{ marginBottom: '0.15rem' }}>Mengetahui</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '9pt', lineHeight: '1.3' }}>
                     Kepala Cabang Madya Klas Pontianak
                   </div>
-                  <div style={{ position: 'relative', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}>
+                  <div style={{ position: 'relative', height: '62px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'visible', margin: '4px 0' }}>
                     {withSignature && isValidSignature(kacabSignature) ? (
                       <img
                         src={kacabSignature}
                         alt="TTD Kepala Cabang"
                         style={{
-                          height: '90px',
-                          maxHeight: '90px',
-                          maxWidth: '250px',
+                          height: '52px',
+                          maxHeight: '55px',
+                          maxWidth: '160px',
                           width: 'auto',
                           objectFit: 'contain',
-                          transform: 'scale(1.15)',
-                          transformOrigin: 'center'
+                          imageRendering: '-webkit-optimize-contrast'
                         }}
                         onError={(e) => { e.target.style.display = 'none'; }}
                       />
                     ) : null}
                   </div>
-                  <div style={{ fontWeight: 'bold', textDecoration: 'underline' }}>
+                  <div style={{ fontWeight: 'bold', textDecoration: 'underline', fontSize: '9.5pt' }}>
                     {kepalaCabang}
                   </div>
-                  <div style={{ fontSize: '9pt' }}>
+                  <div style={{ fontSize: '8.5pt' }}>
                     NUP.{nup}
                   </div>
                 </div>
 
-                <div style={{ textAlign: 'center', width: '320px', marginLeft: 'auto', position: 'relative' }}>
-                  <div style={{ marginBottom: '0.2rem' }}>
+                <div style={{ textAlign: 'center', width: '280px', marginLeft: 'auto', position: 'relative' }}>
+                  <div style={{ marginBottom: '0.15rem' }}>
                     PONTIANAK, {tglMulaiStr}
                   </div>
-                  <div style={{ fontWeight: 'bold' }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '9pt', lineHeight: '1.3' }}>
                     Pembuat Daftar
                   </div>
-                  <div style={{ position: 'relative', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}>
+                  <div style={{ position: 'relative', height: '62px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'visible', margin: '4px 0' }}>
                     {withSignature && isValidSignature(pembuatSignature) ? (
                       <img
                         src={pembuatSignature}
                         alt="TTD Pembuat Daftar"
                         style={{
-                          height: '85px',
-                          maxHeight: '90px',
-                          maxWidth: '220px',
+                          height: '50px',
+                          maxHeight: '55px',
+                          maxWidth: '150px',
                           width: 'auto',
-                          objectFit: 'contain'
+                          objectFit: 'contain',
+                          imageRendering: '-webkit-optimize-contrast'
                         }}
                         onError={(e) => { e.target.style.display = 'none'; }}
                       />
                     ) : null}
                   </div>
-                  <div style={{ fontWeight: 'bold', textDecoration: 'underline' }}>
+                  <div style={{ fontWeight: 'bold', textDecoration: 'underline', fontSize: '9.5pt' }}>
                     {pembuatName}
                   </div>
-                  <div style={{ fontSize: '9pt' }}>
+                  <div style={{ fontSize: '8.5pt' }}>
                     {pembuatDesc}
                   </div>
                 </div>
