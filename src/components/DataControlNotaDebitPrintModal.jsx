@@ -322,7 +322,8 @@ export const DataControlNotaDebitPrintModal = ({
                               ...tdStyle(),
                               fontSize: '6.4pt',
                               fontWeight: biaya.bold ? 800 : 500,
-                              fontStyle: biaya.italic ? 'italic' : 'normal'
+                              fontStyle: biaya.italic ? 'italic' : 'normal',
+                              whiteSpace: 'nowrap'
                             }}
                           >
                             {biaya.label}

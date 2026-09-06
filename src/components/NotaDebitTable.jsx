@@ -213,25 +213,26 @@ export const NotaDebitTable = () => {
       wb.created = new Date();
 
       const ws = wb.addWorksheet('DATA CONTROL NOTA DEBIT', {
-        pageSetup: { orientation: 'landscape', paperSize: 9, fitToPage: true }
+        pageSetup: { orientation: 'landscape', paperSize: 9, fitToPage: true },
+        views: [{ showGridLines: true }]
       });
 
       // Lebar kolom
       ws.columns = [
-        { width: 5 },   // A: NO
-        { width: 10 },  // B: NO SERI
-        { width: 14 },  // C: NO BILLING
-        { width: 14 },  // D: TANGGAL ND
+        { width: 6 },   // A: NO
+        { width: 12 },  // B: NO SERI
+        { width: 16 },  // C: NO BILLING
+        { width: 16 },  // D: TANGGAL ND
         { width: 22 },  // E: NOMOR INVOICE
-        { width: 20 },  // F: NAMA OBYEK
+        { width: 22 },  // F: NAMA OBYEK
         { width: 16 },  // G: AGENDA
         { width: 22 },  // H: NO LAPORAN
         { width: 22 },  // I: NAMA SURVEYOR
         { width: 26 },  // J: PENGGUNA JASA
-        { width: 14 },  // K: JENIS SURVEY
-        { width: 24 },  // L: PROSES BISNIS
-        { width: 20 },  // M: BIAYA (label)
-        { width: 14 },  // N: JUMLAH RP
+        { width: 16 },  // K: JENIS SURVEY
+        { width: 26 },  // L: PROSES BISNIS
+        { width: 28 },  // M: BIAYA (label) - diperlebar agar label seperti TOTAL BIAYA SETELAH PPN tidak wrap atau terpotong
+        { width: 18 },  // N: JUMLAH RP - diperlebar agar nominal tidak overflow
         { width: 22 },  // O: TTD PENERIMA
         { width: 18 },  // P: KET
       ];
@@ -389,7 +390,7 @@ export const NotaDebitTable = () => {
           const labelCell = ws.getCell(rowNum, 13);
           labelCell.value = sub.label;
           labelCell.font = {
-            name: 'Arial', size: 8,
+            name: 'Arial', size: 8.5,
             bold: isTotal,
             italic: isPpn,
             color: isTotal ? { argb: '047857' } : isPpn ? { argb: 'D97706' } : { argb: '374151' }
@@ -397,7 +398,7 @@ export const NotaDebitTable = () => {
           labelCell.fill = isTotal
             ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'ECFDF5' } }
             : { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF' } };
-          labelCell.alignment = LEFT;
+          labelCell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };
           labelCell.border = THIN;
 
           const valCell = ws.getCell(rowNum, 14);
@@ -411,10 +412,10 @@ export const NotaDebitTable = () => {
           valCell.fill = isTotal
             ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'ECFDF5' } }
             : { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF' } };
-          valCell.alignment = CENTER;
+          valCell.alignment = { horizontal: 'right', vertical: 'middle' };
           valCell.border = THIN;
 
-          ws.getRow(rowNum).height = 16;
+          ws.getRow(rowNum).height = 20; // Dipertinggi dari 16 ke 20 agar label biaya tidak berhimpitan dan tidak terpotong
         });
 
         currentRow = endRow + 1;
@@ -434,20 +435,20 @@ export const NotaDebitTable = () => {
       totalFeeCell.value = 'TOTAL KESELURUHAN';
       totalFeeCell.font = { name: 'Arial', size: 9, bold: true, color: NAVY };
       totalFeeCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'DBEAFE' } };
-      totalFeeCell.alignment = CENTER;
+      totalFeeCell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };
       totalFeeCell.border = BOLD_BORDER;
 
       const totalValCell = ws.getCell(currentRow, 14);
       totalValCell.value = totalSetelahPPN;
       totalValCell.numFmt = '"Rp "#,##0';
-      totalValCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: '047857' } };
+      totalValCell.font = { name: 'Arial', size: 10.5, bold: true, color: { argb: '047857' } };
       totalValCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'DBEAFE' } };
-      totalValCell.alignment = CENTER;
+      totalValCell.alignment = { horizontal: 'right', vertical: 'middle' };
       totalValCell.border = BOLD_BORDER;
 
       ws.mergeCells(currentRow, 15, currentRow, 16);
       ws.getCell(currentRow, 15).border = BOLD_BORDER;
-      ws.getRow(currentRow).height = 22;
+      ws.getRow(currentRow).height = 24;
 
       // ── DOWNLOAD ──
       const buffer = await wb.xlsx.writeBuffer();
@@ -886,10 +887,10 @@ export const NotaDebitTable = () => {
                         )}
 
                         {/* BIAYA */}
-                        <td style={{ ...tdStyle(), padding: '0.25rem 0.5rem', fontSize: '0.73rem', fontWeight: biaya.bold ? 800 : 600, color: biaya.color, fontStyle: biaya.italic ? 'italic' : 'normal', background: biaya.bg || 'transparent' }}>
+                        <td style={{ ...tdStyle(), padding: '0.3rem 0.6rem', fontSize: '0.74rem', fontWeight: biaya.bold ? 800 : 600, color: biaya.color, fontStyle: biaya.italic ? 'italic' : 'normal', background: biaya.bg || 'transparent', whiteSpace: 'nowrap' }}>
                           {biaya.label}
                         </td>
-                        <td style={{ ...tdStyle(true), padding: '0.25rem 0.5rem', fontWeight: biaya.bold ? 900 : 700, color: biaya.color, background: biaya.bg || 'transparent', whiteSpace: 'nowrap' }}>
+                        <td style={{ ...tdStyle(true), padding: '0.3rem 0.6rem', fontWeight: biaya.bold ? 900 : 700, color: biaya.color, background: biaya.bg || 'transparent', whiteSpace: 'nowrap', textAlign: 'right' }}>
                           Rp {biaya.value.toLocaleString('id-ID')}
                         </td>
 
