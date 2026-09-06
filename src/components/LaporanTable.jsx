@@ -6,16 +6,11 @@ import {
   Trash2,
   ClipboardList,
   Anchor,
-  User,
   Calendar,
   Printer,
   FileSpreadsheet,
-  Lock,
-  Unlock,
   Clock,
-  Paperclip,
   Filter,
-  CheckCircle2,
   Download,
   FileText,
   ChevronDown,
@@ -23,15 +18,12 @@ import {
   Eye,
   X,
   ArrowUpDown,
-  RotateCcw,
-  FileCheck2,
-  Plane,
-  Receipt
+  RotateCcw
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
-import { formatDateIndo, getStatusBadgeClass, isEditWindowExpired, formatRupiah, cleanDocNumber, extractAgendaNumber } from '../utils/formatters';
+import { formatDateIndo, formatRupiah, cleanDocNumber, extractAgendaNumber } from '../utils/formatters';
 import { filterDataByRole, isSameSurveyor } from '../utils/filterData';
 import { LaporanModal } from './LaporanModal';
 import { LaporanPrintModal } from './LaporanPrintModal';
@@ -48,6 +40,7 @@ export const LaporanTable = () => {
   const [surveyorFilter, setSurveyorFilter] = useState('Semua');
 
   // Multi-Month & Year Filter
+  const [pdsTypeFilter, setPdsTypeFilter] = useState('Semua'); // Semua, DALAM, LUAR
   const [selectedMonth, setSelectedMonth] = useState('Semua');
   const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
 
@@ -234,6 +227,10 @@ export const LaporanTable = () => {
       if (item.approvalStatus !== 'ACC') {
         return false;
       }
+
+      // Filter PDS Dalam vs Luar Negeri
+      if (pdsTypeFilter === 'LUAR' && !(item.isLuarNegeri || item.pdsType === 'luar_negeri')) return false;
+      if (pdsTypeFilter === 'DALAM' && (item.isLuarNegeri || item.pdsType === 'luar_negeri')) return false;
 
       const dateStr = getItemDate(item);
 
@@ -992,7 +989,7 @@ export const LaporanTable = () => {
         }}
       >
         {/* Row 1: Search, Surveyor & Sort Dropdown */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1.2fr', gap: '0.5rem', alignItems: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr 1fr 1.1fr', gap: '0.5rem', alignItems: 'center' }}>
           {/* Search Box */}
           <div className="search-box" style={{ width: '100%' }}>
             <Search className="search-icon" size={14} />
@@ -1041,6 +1038,20 @@ export const LaporanTable = () => {
                 ))}
               </select>
             )}
+          </div>
+
+          {/* Filter Tipe PDS */}
+          <div>
+            <select
+              className="form-select"
+              value={pdsTypeFilter}
+              onChange={(e) => setPdsTypeFilter(e.target.value)}
+              style={{ width: '100%', fontSize: '0.78rem', padding: '0.25rem 0.5rem', height: '32px', fontWeight: 600 }}
+            >
+              <option value="Semua">🌐 Semua Tipe PDS</option>
+              <option value="DALAM">🇮🇩 Dalam Negeri</option>
+              <option value="LUAR">✈️ Luar Negeri (USD)</option>
+            </select>
           </div>
 
           {/* Sortir / Short Selector */}
@@ -1442,8 +1453,15 @@ export const LaporanTable = () => {
                       })()}
                     </td>
                     <td>
-                      <div style={{ fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase' }}>
-                        {vesselName}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                        <div style={{ fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase' }}>
+                          {vesselName}
+                        </div>
+                        {(item.isLuarNegeri || item.pdsType === 'luar_negeri') && (
+                          <span style={{ fontSize: '0.65rem', padding: '1px 5px', borderRadius: '4px', background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', fontWeight: 700 }}>
+                            🌐 Luar Negeri
+                          </span>
+                        )}
                       </div>
                       {item.isSplitChild && (
                         <div style={{ fontSize: '0.7rem', color: '#0284c7', fontWeight: 600 }}>
@@ -1456,6 +1474,11 @@ export const LaporanTable = () => {
                     </td>
                     <td style={{ textAlign: 'right', fontWeight: 800, color: 'var(--accent-primary)', whiteSpace: 'nowrap' }}>
                       {formatRupiah(nilaiNum)}
+                      {(item.isLuarNegeri || item.pdsType === 'luar_negeri') && (item.subtotalUsd || item.uangHarianUsd) && (
+                        <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600 }}>
+                          ${(Number(item.subtotalUsd) || (Number(item.totalUangHarianUsd) || 0)).toLocaleString('en-US')} USD
+                        </div>
+                      )}
                     </td>
                     <td>
                       <div style={{ fontWeight: 600, textTransform: 'uppercase' }}>

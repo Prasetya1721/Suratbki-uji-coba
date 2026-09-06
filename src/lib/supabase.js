@@ -1,35 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+/**
+ * Supabase Client Configuration
+ * 
+ * CATATAN: Project ini berjalan dalam MODE LOKAL PENUH (OFFLINE).
+ * Seluruh sambungan cloud database Supabase telah diputus.
+ * Penyimpanan menggunakan LocalStorage browser.
+ */
 
-const supabaseUrl     = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('[Supabase] VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY wajib diisi di .env.local');
-}
-
-let supabaseClient = null;
-
-try {
-  supabaseClient = supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: false
-        },
-        global: {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        },
-        db: {
-          schema: 'public'
-        }
-      })
-    : null;
-} catch (error) {
-  console.error('[Supabase] Failed to create client:', error);
-  console.warn('[Supabase] Running in offline mode - realtime features disabled');
-}
-
-export const supabase = supabaseClient;
+export const supabase = null;

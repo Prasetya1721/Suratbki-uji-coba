@@ -7,15 +7,10 @@ import {
   Trash2,
   RotateCcw,
   ShieldAlert,
-  ShieldCheck,
-  TrendingUp,
-  DollarSign,
   Navigation,
-  Compass,
   Plane,
   Car,
-  Ship,
-  Sparkles
+  Ship
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';

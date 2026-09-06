@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Printer, Anchor, FileSpreadsheet } from 'lucide-react';
+import { X, Printer, Anchor } from 'lucide-react';
 import { formatDateIndo, formatRupiah, extractAgendaNumber } from '../utils/formatters';
 import { ModalPortal } from './ModalPortal';
 import { DanantaraLogo } from './DanantaraLogo';

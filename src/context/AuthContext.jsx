@@ -10,7 +10,7 @@ import {
   isSessionValid,
   destroySession
 } from '../utils/security';
-import { fetchUsersFromCloud, saveUserToCloud, deleteUserFromCloud } from '../lib/supabaseSync';
+
 
 const AuthContext = createContext();
 
@@ -55,6 +55,19 @@ export const INITIAL_USERS = [
     avatarBg: '#10b981',
     signatureUrl: '/signatures/alfian_bone_handwritten.png',
     description: 'Surveyor BKI'
+  },
+  {
+    id: 'usr-tri',
+    username: 'tri',
+    password: 'password123',
+    name: 'TRI LAKSONO JOENIAWAN',
+    email: 'tri@gmail.com',
+    phone: '+620000000010',
+    role: 'surveyor',
+    grade: 'GRADE 6 A',
+    roleLabel: 'Surveyor',
+    avatarBg: '#2563eb',
+    description: 'Marine Surveyor BKI'
   },
   {
     id: 'usr-andre',
@@ -145,28 +158,12 @@ export const AuthProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : INITIAL_USERS;
   });
 
-  useEffect(() => {
-    const loadCloudUsers = async () => {
-      try {
-        const cloudUsers = await fetchUsersFromCloud();
-        if (Array.isArray(cloudUsers) && cloudUsers.length > 0) {
-          setUsersList(cloudUsers);
-        } else {
-          // If Supabase has no users yet, seed initial users to cloud
-          INITIAL_USERS.forEach((u) => saveUserToCloud(u));
-        }
-      } catch (e) {
-        console.warn('Failed loading users from cloud:', e);
-      }
-    };
-    loadCloudUsers();
-  }, []);
 
   useEffect(() => {
-    const isReset = localStorage.getItem('st_users_reset_v5');
+    const isReset = localStorage.getItem('st_users_reset_v6');
     if (!isReset) {
       setUsersList(INITIAL_USERS);
-      localStorage.setItem('st_users_reset_v5', 'true');
+      localStorage.setItem('st_users_reset_v6', 'true');
     }
   }, []);
 
@@ -414,10 +411,6 @@ export const AuthProvider = ({ children }) => {
       })
     );
 
-    if (updatedUserObj) {
-      await saveUserToCloud(updatedUserObj);
-    }
-
     // Don't store password in currentUser
     if (currentUser && currentUser.id === userId) {
       setCurrentUser((prev) => ({ ...prev }));
@@ -441,16 +434,11 @@ export const AuthProvider = ({ children }) => {
       prev.map((u) => {
         if (u.id === userId) {
           const updated = { ...u, password: hashedPw };
-          updatedUserObj = updated;
           return updated;
         }
         return u;
       })
     );
-
-    if (updatedUserObj) {
-      await saveUserToCloud(updatedUserObj);
-    }
   }, []);
 
   // User Management Actions for Admin
@@ -478,7 +466,6 @@ export const AuthProvider = ({ children }) => {
     };
 
     setUsersList((prev) => [newUser, ...prev]);
-    await saveUserToCloud(newUser);
   }, []);
 
   const updateUser = useCallback(async (id, updatedData) => {
@@ -495,16 +482,11 @@ export const AuthProvider = ({ children }) => {
         if (u.id === id) {
           oldUserObj = u;
           const updated = { ...u, ...dataToSave };
-          updatedUserObj = updated;
           return updated;
         }
         return u;
       })
     );
-
-    if (updatedUserObj) {
-      await saveUserToCloud(updatedUserObj);
-    }
 
     if (oldUserObj && dataToSave.name && oldUserObj.name !== dataToSave.name) {
       try {
@@ -530,7 +512,6 @@ export const AuthProvider = ({ children }) => {
       return;
     }
     setUsersList((prev) => prev.filter((u) => u.id !== id));
-    await deleteUserFromCloud(id);
   }, [currentUser]);
 
   const resetUsers = useCallback(() => {

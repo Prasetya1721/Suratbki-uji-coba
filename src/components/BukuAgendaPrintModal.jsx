@@ -2,7 +2,7 @@ import React from 'react';
 import { X, Printer, BookOpen } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
-import { formatDateIndo, cleanDocNumber, formatRupiah } from '../utils/formatters';
+import { formatDateIndo, cleanDocNumber } from '../utils/formatters';
 import { countHolidaysAndWeekendsInRange } from '../utils/holidays';
 import { findSurveyorUser } from '../utils/filterData';
 import { ModalPortal } from './ModalPortal';

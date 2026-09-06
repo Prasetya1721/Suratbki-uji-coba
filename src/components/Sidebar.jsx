@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, FileCheck, Receipt, BarChart2, Users, Settings, LogOut, Compass, ChevronDown, ChevronUp, Anchor } from 'lucide-react';
+import { LayoutDashboard, FileCheck, BarChart2, Users, Settings, LogOut, Compass, ChevronDown, ChevronUp, Anchor } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { filterDataByRole } from '../utils/filterData';
@@ -23,7 +23,9 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileMenuOpen, setIsMobile
   const filteredLaporan = filterDataByRole(activePdsAsLaporan, currentUser, role, 'petugas');
 
   const spsCount = filteredSurat.filter((st) => st.docType !== 'PDS' && !st.isPds).length;
-  const pdsCount = filteredSurat.filter((st) => st.docType === 'PDS' || st.isPds || (st.status !== 'Menunggu Survei' && !st.isSps)).length;
+  const isPdsItem = (st) => st.docType === 'PDS' || st.isPds || (st.status !== 'Menunggu Survei' && !st.isSps);
+  const pdsDalamCount = filteredSurat.filter((st) => isPdsItem(st) && !st.isLuarNegeri && st.pdsType !== 'luar_negeri').length;
+  const pdsLuarCount = filteredSurat.filter((st) => isPdsItem(st) && (st.isLuarNegeri === true || st.pdsType === 'luar_negeri')).length;
   const isManagementVisit = role === 'admin' || role === 'developer' || role === 'kacab' || role === 'kacap' || role === 'finance' || role === 'keuangan' || role === 'monitor';
   const filteredVisitSurvei = isManagementVisit
     ? (visitSurvei || [])
@@ -60,11 +62,17 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileMenuOpen, setIsMobile
     }
   ];
 
-  if (!isFinance && (role === 'admin' || role === 'developer')) {
+  if (!isFinance && (role === 'admin' || role === 'developer' || role === 'kacab' || role === 'surveyor')) {
     suratSubItems.push({
-      id: 'surat_pds',
-      label: 'PDS',
-      badge: pdsCount
+      id: 'surat_pds_dalam',
+      label: 'PDS Dalam Negeri',
+      badge: pdsDalamCount
+    });
+    suratSubItems.push({
+      id: 'surat_pds_luar',
+      label: 'PDS Luar Negeri',
+      badge: pdsLuarCount > 0 ? pdsLuarCount : null,
+      badgeColor: '#0284c7'
     });
   }
 

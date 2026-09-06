@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import {
   X,
-  Save,
   Send,
   Anchor,
   FileCheck2,

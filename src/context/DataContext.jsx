@@ -9,80 +9,24 @@ import { DEFAULT_MASTER_KAPAL, mergeWithDefaultMasterKapal } from '../data/defau
 import { cleanDocNumber } from '../utils/formatters';
 import { isSameSurveyor } from '../utils/filterData';
 import {
-  fetchSuratTugasFromCloud,
   saveSuratTugasToCloud,
   deleteSuratTugasFromCloud,
-  fetchKwitansiFromCloud,
   saveKwitansiToCloud,
   deleteKwitansiFromCloud,
-  fetchLaporanFromCloud,
   saveLaporanToCloud,
   deleteLaporanFromCloud,
-  fetchTariffsFromCloud,
   saveTariffToCloud,
   deleteTariffFromCloud,
-  fetchGradeTariffsFromCloud,
   saveGradeTariffToCloud,
   deleteGradeTariffFromCloud,
-  fetchAdminSettingsFromCloud,
   saveAdminSettingsToCloud,
-  fetchMasterKapalFromCloud,
   saveMasterKapalToCloud,
   deleteMasterKapalFromCloud,
-  fetchVisitSurveiFromCloud,
   saveVisitSurveiToCloud,
-  deleteVisitSurveiFromCloud,
-  clearOperationalDataFromCloud,
-  subscribeToRealtimeChanges
+  deleteVisitSurveiFromCloud
 } from '../lib/supabaseSync';
 import { supabase } from '../lib/supabase';
-import { deleteFromGoogleDrive, isGoogleDriveUrl } from '../utils/googleDriveService';
 
-const deleteEntityFilesFromGoogleDrive = (item) => {
-  if (!item || typeof item !== 'object') return;
-  const urlsToDelete = [];
-
-  const checkAndAdd = (val) => {
-    if (!val) return;
-    if (typeof val === 'string' && isGoogleDriveUrl(val)) {
-      urlsToDelete.push(val);
-    } else if (Array.isArray(val)) {
-      val.forEach(v => {
-        if (typeof v === 'string' && isGoogleDriveUrl(v)) urlsToDelete.push(v);
-        else if (v && typeof v === 'object') {
-          if (isGoogleDriveUrl(v.url)) urlsToDelete.push(v.url);
-          if (isGoogleDriveUrl(v.data)) urlsToDelete.push(v.data);
-        }
-      });
-    }
-  };
-
-  checkAndAdd(item.fileVisitData);
-  checkAndAdd(item.fileVisitName);
-  checkAndAdd(item.fileFotoData);
-  checkAndAdd(item.fileFotoName);
-  checkAndAdd(item.fileTiketTransportData);
-  checkAndAdd(item.fileTiketTransportName);
-  checkAndAdd(item.fileKwitansiHotelData);
-  checkAndAdd(item.fileKwitansiHotelName);
-  checkAndAdd(item.fotoList);
-
-  if (Array.isArray(item.shipsDetail)) {
-    item.shipsDetail.forEach(sh => {
-      if (sh) {
-        checkAndAdd(sh.fileVisitData);
-        checkAndAdd(sh.fileVisitName);
-        checkAndAdd(sh.fileFotoData);
-        checkAndAdd(sh.fileFotoName);
-      }
-    });
-  }
-
-  const uniqueUrls = [...new Set(urlsToDelete)];
-  uniqueUrls.forEach(url => {
-    deleteFromGoogleDrive(url).catch(err => console.warn('Auto-delete GDrive file error:', err));
-  });
-};
 
 const safeSetLocalStorage = (key, data) => {
   try {
@@ -140,8 +84,18 @@ const DataContext = createContext();
 export const DataProvider = ({ children }) => {
   const [suratTugas, setSuratTugas] = useState(() => {
     const saved = localStorage.getItem('st_surat_tugas');
-    const parsed = saved ? JSON.parse(saved) : INITIAL_SURAT_TUGAS;
-    return Array.isArray(parsed) ? parsed.map(cleanEntityObject) : [];
+    let parsed = saved ? JSON.parse(saved) : INITIAL_SURAT_TUGAS;
+    if (Array.isArray(parsed)) {
+      const hasLuarNegeri = parsed.some((item) => item.isLuarNegeri || item.pdsType === 'luar_negeri');
+      if (!hasLuarNegeri) {
+        const demoLN = INITIAL_SURAT_TUGAS.find((item) => item.id === 'ST-DEMO-LN-001');
+        if (demoLN) {
+          parsed = [demoLN, ...parsed];
+        }
+      }
+      return parsed.map(cleanEntityObject);
+    }
+    return [];
   });
 
   const [kwitansiHonor, setKwitansiHonor] = useState(() => {
@@ -280,81 +234,29 @@ export const DataProvider = ({ children }) => {
     return () => window.removeEventListener('st_user_renamed', handleUserRenamed);
   }, []);
 
-  // ====== 0. INITIAL CLOUD LOAD (SUPABASE) & REALTIME SYNC ======
-  const refreshAllFromCloud = useCallback(async () => {
-    try {
-      const [cloudSurat, cloudKw, cloudLap, cloudTariffs, cloudGrades, cloudSettings, cloudKapal, cloudVisit] = await Promise.all([
-        fetchSuratTugasFromCloud(),
-        fetchKwitansiFromCloud(),
-        fetchLaporanFromCloud(),
-        fetchTariffsFromCloud(),
-        fetchGradeTariffsFromCloud(),
-        fetchAdminSettingsFromCloud(),
-        fetchMasterKapalFromCloud(),
-        fetchVisitSurveiFromCloud()
-      ]);
+  // ====== 0. MODE LOKAL MURNI (OFFLINE STANDALONE) ======
+  // Seluruh data disimpan dan disinkronkan langsung ke LocalStorage browser.
 
-      if (Array.isArray(cloudSurat) && cloudSurat.length > 0) {
-        // Auto-heal orphan SPS: jika ada SPS yang memiliki pdsId mengarah ke PDS yang sudah tidak ada di database,
-        // kembalikan statusnya ke 'Menunggu Survei' dan pdsId ke null agar tidak hilang/tersembunyi di UI.
-        const pdsIdSet = new Set(
-          cloudSurat
-            .filter((s) => s && (s.docType === 'PDS' || s.isPds))
-            .map((s) => s.id)
-        );
+  // Auto-reset ke Data Demo resmi (memastikan data lama dibersihkan dan menyisakan data demo)
+  useEffect(() => {
+    const isDemoLoaded = localStorage.getItem('st_demo_seeded_v2');
+    if (!isDemoLoaded) {
+      const demoST = INITIAL_SURAT_TUGAS.map(cleanEntityObject);
+      const demoKW = INITIAL_KWITANSI_HONOR.map(cleanEntityObject);
+      const demoLap = INITIAL_LAPORAN_SURVEI.map(cleanEntityObject);
 
-        const healedSurat = cloudSurat.map((st) => {
-          const isSps = st && (st.docType === 'SPS' || st.isSps);
-          if (isSps && st.pdsId && !pdsIdSet.has(st.pdsId)) {
-            console.warn(`[AutoHeal] Memulihkan SPS ${st.id} (${st.namaKapal}) karena PDS induknya (${st.pdsId}) sudah dihapus.`);
-            const restored = { ...st, pdsId: null, status: 'Menunggu Survei' };
-            saveSuratTugasToCloud(restored);
-            return restored;
-          }
-          return st;
-        });
+      setSuratTugas(demoST);
+      setKwitansiHonor(demoKW);
+      setLaporanSurvei(demoLap);
+      setVisitSurvei([]);
 
-        setSuratTugas(healedSurat.map(cleanEntityObject));
-      }
-      if (Array.isArray(cloudKw) && cloudKw.length > 0) {
-        setKwitansiHonor(cloudKw.map(cleanEntityObject));
-      }
-      if (Array.isArray(cloudLap) && cloudLap.length > 0) {
-        setLaporanSurvei(cloudLap.map(cleanEntityObject));
-      }
-      if (Array.isArray(cloudTariffs) && cloudTariffs.length > 0) {
-        setTariffs(cloudTariffs);
-      }
-      if (Array.isArray(cloudGrades) && cloudGrades.length > 0) {
-        setGradeTariffs(cloudGrades);
-      }
-      if (cloudSettings && typeof cloudSettings === 'object') {
-        setAdminSettings((prev) => ({ ...prev, ...cloudSettings }));
-      }
-      if (Array.isArray(cloudKapal) && cloudKapal.length > 0) {
-        setMasterKapal(mergeWithDefaultMasterKapal(cloudKapal));
-      }
-      if (Array.isArray(cloudVisit)) {
-        setVisitSurvei(cloudVisit.map(cleanEntityObject));
-        safeSetLocalStorage('st_visit_survei', cloudVisit);
-      }
-    } catch (e) {
-      console.warn('Cloud sync load warning:', e);
+      safeSetLocalStorage('st_surat_tugas', demoST);
+      safeSetLocalStorage('st_kwitansi_honor', demoKW);
+      safeSetLocalStorage('st_laporan_survei', demoLap);
+      safeSetLocalStorage('st_visit_survei', []);
+      localStorage.setItem('st_demo_seeded_v2', 'true');
     }
   }, []);
-
-  useEffect(() => {
-    refreshAllFromCloud();
-
-    // Subscribe to live cloud changes
-    const unsubscribe = subscribeToRealtimeChanges(() => {
-      refreshAllFromCloud();
-    });
-
-    return () => {
-      if (typeof unsubscribe === 'function') unsubscribe();
-    };
-  }, [refreshAllFromCloud]);
 
   // Sync to LocalStorage (Cleaned & Quota Safe)
   useEffect(() => {
@@ -1583,26 +1485,22 @@ export const DataProvider = ({ children }) => {
     );
   };
 
-  // Hapus semua data operasional (SPS, PDS, Laporan, Kwitansi, Lampiran) baik lokal maupun di Supabase Cloud.
+  // Reset data operasional dan kembalikan ke data demo default.
   // TETAP MENYIMPAN: Manajemen Tarif, Grade Tarif, Manajemen User, Database Kapal, dan Pengaturan Admin.
   const resetData = async () => {
-    // 1. Clear operational states
-    setSuratTugas([]);
-    setKwitansiHonor([]);
-    setLaporanSurvei([]);
+    const demoST = INITIAL_SURAT_TUGAS.map(cleanEntityObject);
+    const demoKW = INITIAL_KWITANSI_HONOR.map(cleanEntityObject);
+    const demoLap = INITIAL_LAPORAN_SURVEI.map(cleanEntityObject);
 
-    // 2. Clear operational localStorage
-    localStorage.removeItem('st_surat_tugas');
-    localStorage.removeItem('st_kwitansi_honor');
-    localStorage.removeItem('st_laporan_survei');
+    setSuratTugas(demoST);
+    setKwitansiHonor(demoKW);
+    setLaporanSurvei(demoLap);
+    setVisitSurvei([]);
 
-    // 3. Clear from Supabase Cloud
-    try {
-      await clearOperationalDataFromCloud();
-      console.log('[DataContext] Data SPS, PDS, Laporan, dan Kwitansi berhasil dihapus dari Supabase Cloud');
-    } catch (error) {
-      console.error('[DataContext] Error clearing Supabase operational data:', error);
-    }
+    safeSetLocalStorage('st_surat_tugas', demoST);
+    safeSetLocalStorage('st_kwitansi_honor', demoKW);
+    safeSetLocalStorage('st_laporan_survei', demoLap);
+    safeSetLocalStorage('st_visit_survei', []);
   };
 
   const resetDemoData = resetData;

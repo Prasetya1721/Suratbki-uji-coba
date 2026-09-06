@@ -5,24 +5,17 @@ import {
   X,
   Calendar,
   MapPin,
-  User,
   FileText,
   CheckCircle2,
   Plus,
   Save,
   Anchor,
-  Printer,
   Sparkles,
-  Hash,
-  Shield,
-  Camera,
   FileCheck2,
   Plane,
   Receipt,
-  Ticket,
   Trash2,
   Layers,
-  Compass,
   AlertCircle,
   Calculator,
   ChevronDown,
@@ -34,13 +27,11 @@ import {
   Edit2,
   AlertTriangle,
   CheckCircle,
-  Eye,
-  Send,
   CheckCheck,
   Clock,
   Ship
 } from 'lucide-react';
-import { formatDateIndo, getStatusBadgeClass, formatRupiah, cleanDocNumber, isDocumentLocked } from '../utils/formatters';
+import { formatDateIndo, formatRupiah, cleanDocNumber, isDocumentLocked } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { getLocationCategory, findTariffByLocation } from '../utils/tariffData';
@@ -48,9 +39,11 @@ import { ModalPortal } from './ModalPortal';
 import { SuratTugasPrintModal } from './SuratTugasPrintModal';
 import { SuratTugasPdsPrintModal } from './SuratTugasPdsPrintModal';
 import { BiayaPdsPrintModal } from './BiayaPdsPrintModal';
+import { BiayaPdsLuarNegeriPrintModal } from './BiayaPdsLuarNegeriPrintModal';
 import { TandaTerimaSmcPrintModal } from './TandaTerimaSmcPrintModal';
 import { LaporanPrintModal } from './LaporanPrintModal';
 import { PdsModal } from './PdsModal';
+import { PdsLuarNegeriModal } from './PdsLuarNegeriModal';
 import { ConfirmModal } from './ConfirmModal';
 import { sanitizeFormData, validateFileUpload } from '../utils/security';
 import MultiPhotoUpload from './MultiPhotoUpload';
@@ -61,7 +54,7 @@ import { AttachmentPreviewModal } from './AttachmentPreviewModal';
 import { ShipAttachmentsUpload } from './ShipAttachmentsUpload';
 import { deleteFromGoogleDrive, isGoogleDriveUrl } from '../utils/googleDriveService';
 import { MultiDocUpload } from './MultiDocUpload';
-import { countHolidaysAndWeekendsInRange, checkHolidayOrWeekend } from '../utils/holidays';
+import { countHolidaysAndWeekendsInRange } from '../utils/holidays';
 import { filterDataByRole, findSurveyorUser } from '../utils/filterData';
 
 export const DayDetailModal = ({
@@ -151,6 +144,7 @@ export const DayDetailModal = ({
   const [printPdsItem, setPrintPdsItem] = useState(null);
   const [isPdsPrintModalOpen, setIsPdsPrintModalOpen] = useState(false);
   const [isBiayaPrintModalOpen, setIsBiayaPrintModalOpen] = useState(false);
+  const [isBiayaLnPrintModalOpen, setIsBiayaLnPrintModalOpen] = useState(false);
   const [printBiayaItem, setPrintBiayaItem] = useState(null);
   const [printSmcItem, setPrintSmcItem] = useState(null);
   const [isSmcPrintModalOpen, setIsSmcPrintModalOpen] = useState(false);
@@ -161,6 +155,7 @@ export const DayDetailModal = ({
   const [isLaporanPrintModalOpen, setIsLaporanPrintModalOpen] = useState(false);
   const [editingPdsItem, setEditingPdsItem] = useState(null);
   const [isEditPdsModalOpen, setIsEditPdsModalOpen] = useState(false);
+  const [isEditPdsLnModalOpen, setIsEditPdsLnModalOpen] = useState(false);
 
   const [isUploadingTiket, setIsUploadingTiket] = useState(false);
   const [isUploadingHotel, setIsUploadingHotel] = useState(false);
@@ -886,7 +881,20 @@ export const DayDetailModal = ({
 
   const handleOpenBiayaPrint = (item) => {
     setPrintBiayaItem(item);
-    setIsBiayaPrintModalOpen(true);
+    if (item?.isLuarNegeri || item?.pdsType === 'luar_negeri') {
+      setIsBiayaLnPrintModalOpen(true);
+    } else {
+      setIsBiayaPrintModalOpen(true);
+    }
+  };
+
+  const handleOpenEditPds = (pds) => {
+    setEditingPdsItem(pds);
+    if (pds?.isLuarNegeri || pds?.pdsType === 'luar_negeri') {
+      setIsEditPdsLnModalOpen(true);
+    } else {
+      setIsEditPdsModalOpen(true);
+    }
   };
 
   const handleOpenSmcPrint = (item) => {
@@ -1202,8 +1210,7 @@ export const DayDetailModal = ({
                                         gap: '0.25rem'
                                       }}
                                       onClick={() => {
-                                        setEditingPdsItem(pds);
-                                        setIsEditPdsModalOpen(true);
+                                        handleOpenEditPds(pds);
                                       }}
                                     >
                                       <Edit2 size={12} />
@@ -1325,8 +1332,7 @@ export const DayDetailModal = ({
                                       type="button"
                                       className="btn btn-secondary btn-sm"
                                       onClick={() => {
-                                        setEditingPdsItem(pds);
-                                        setIsEditPdsModalOpen(true);
+                                        handleOpenEditPds(pds);
                                       }}
                                       style={{
                                         padding: '0.25rem 0.6rem',
@@ -1360,8 +1366,7 @@ export const DayDetailModal = ({
                                       gap: '0.25rem'
                                     }}
                                     onClick={() => {
-                                      setEditingPdsItem(pds);
-                                      setIsEditPdsModalOpen(true);
+                                      handleOpenEditPds(pds);
                                     }}
                                     title="Edit Data Dokumen PDS"
                                   >
@@ -2849,6 +2854,7 @@ export const DayDetailModal = ({
       <SuratTugasPrintModal isOpen={isPrintModalOpen} onClose={() => setIsPrintModalOpen(false)} suratTugas={printSuratItem} />
       <SuratTugasPdsPrintModal isOpen={isPdsPrintModalOpen} onClose={() => setIsPdsPrintModalOpen(false)} suratTugas={printPdsItem} />
       <BiayaPdsPrintModal isOpen={isBiayaPrintModalOpen} onClose={() => setIsBiayaPrintModalOpen(false)} suratTugas={printBiayaItem} />
+      <BiayaPdsLuarNegeriPrintModal isOpen={isBiayaLnPrintModalOpen} onClose={() => setIsBiayaLnPrintModalOpen(false)} suratTugas={printBiayaItem} />
       <TandaTerimaSmcPrintModal isOpen={isSmcPrintModalOpen} onClose={() => setIsSmcPrintModalOpen(false)} suratTugas={printSmcItem} />
       <LaporanPrintModal isOpen={isLaporanPrintModalOpen} onClose={() => setIsLaporanPrintModalOpen(false)} laporan={printLaporanItem} />
 
@@ -2862,6 +2868,18 @@ export const DayDetailModal = ({
           }}
           editItem={editingPdsItem}
           onPrint={handleOpenPdsPrint}
+        />
+      )}
+
+      {/* Embedded PDS Luar Negeri Edit Modal */}
+      {isEditPdsLnModalOpen && (
+        <PdsLuarNegeriModal
+          isOpen={isEditPdsLnModalOpen}
+          onClose={() => {
+            setIsEditPdsLnModalOpen(false);
+            setEditingPdsItem(null);
+          }}
+          editData={editingPdsItem}
         />
       )}
 

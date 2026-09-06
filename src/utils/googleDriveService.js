@@ -1,54 +1,38 @@
 /**
- * Google Drive Service Utility — Sistem Surat Tugas BKI Pontianak
+ * Google Drive Service Utility — OFFLINE STANDALONE MODE
  * 
- * Handles:
- * - Direct upload to Google Drive via Google Apps Script (GAS) Web App proxy
- * - Automatic folder structuring (Root / Year / Month / SP-Ship / Category)
- * - Connection testing / health check
- * - Storage configuration management (LocalStorage & Supabase sync)
+ * Seluruh sambungan ke Google Drive & Google Apps Script dinonaktifkan.
+ * File lampiran disimpan secara lokal sebagai Base64 Data URL.
  */
-
-import { toast } from 'react-hot-toast';
 
 const STORAGE_KEY_GDRIVE_CONFIG = 'st_gdrive_config';
 
 /**
- * Retrieves the current Google Drive configuration
+ * Retrieves the current Google Drive configuration (Always Disabled)
  */
 export function getGoogleDriveConfig() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY_GDRIVE_CONFIG);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return {
-        enabled: parsed.enabled ?? true,
-        webAppUrl: parsed.webAppUrl || 'https://script.google.com/macros/s/AKfycbxMYYfKw5rwpj_G1HoGh4lIXQxh6KI8mMZo7SEBWDQHTzoQbbGou1e8I58K3yer5xrSmg/exec',
-        rootFolder: parsed.rootFolder || 'BKI_DOKUMEN_SURAT',
-        autoMigrate: parsed.autoMigrate || false
-      };
-    }
-  } catch (e) {
-    console.warn('Error reading gdrive config:', e);
-  }
-
   return {
-    enabled: true,
-    webAppUrl: 'https://script.google.com/macros/s/AKfycbxMYYfKw5rwpj_G1HoGh4lIXQxh6KI8mMZo7SEBWDQHTzoQbbGou1e8I58K3yer5xrSmg/exec',
-    rootFolder: 'BKI_DOKUMEN_SURAT',
+    enabled: false,
+    webAppUrl: '',
+    rootFolder: '',
     autoMigrate: false
   };
 }
 
 /**
- * Saves Google Drive configuration to local storage
+ * Saves Google Drive configuration (Always Disabled)
  */
 export function saveGoogleDriveConfig(config) {
   try {
-    const merged = { ...getGoogleDriveConfig(), ...config };
-    localStorage.setItem(STORAGE_KEY_GDRIVE_CONFIG, JSON.stringify(merged));
-    return merged;
+    const disabledConfig = {
+      enabled: false,
+      webAppUrl: '',
+      rootFolder: '',
+      autoMigrate: false
+    };
+    localStorage.setItem(STORAGE_KEY_GDRIVE_CONFIG, JSON.stringify(disabledConfig));
+    return disabledConfig;
   } catch (e) {
-    console.error('Error saving gdrive config:', e);
     return null;
   }
 }
@@ -59,13 +43,13 @@ export function saveGoogleDriveConfig(config) {
 export function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Gagal membaca file untuk upload Google Drive'));
+    reader.onerror = () => reject(new Error('Gagal membaca berkas lokal'));
     reader.onload = () => {
       const result = reader.result;
       if (typeof result === 'string') {
         resolve(result);
       } else {
-        reject(new Error('Format file tidak didukung'));
+        reject(new Error('Format berkas tidak didukung'));
       }
     };
     reader.readAsDataURL(file);
@@ -73,305 +57,47 @@ export function fileToBase64(file) {
 }
 
 /**
- * Tests connection to the Google Apps Script Web App
+ * Tests connection to the Google Apps Script Web App (Disabled)
  */
-export function testGoogleDriveConnection(webAppUrl) {
-  return new Promise(async (resolve, reject) => {
-    let url = (webAppUrl || getGoogleDriveConfig().webAppUrl || '').trim();
-    url = url.replace(/[\r\n\t]/g, '').trim();
-
-    if (!url) {
-      return reject(new Error('URL Google Apps Script Web App belum diisi'));
-    }
-
-    if (!url.startsWith('https://script.google.com/')) {
-      return reject(new Error('URL harus berawalan "https://script.google.com/macros/s/..."'));
-    }
-
-    if (url.includes('/edit')) {
-      return reject(new Error('URL yang dimasukkan adalah URL Editor script, bukan Web App. Di Google Apps Script, klik Deploy > New Deployment > Pilih jenis "Web App" > Set Who has access: "Anyone" > Copy Web App URL.'));
-    }
-
-    if (url.endsWith('/dev') || url.includes('/dev?')) {
-      return reject(new Error('URL berakhiran "/dev" adalah mode test developer dan terkunci login. Gunakan Web App URL berakhiran "/exec" dari menu Deploy > New deployment dengan akses "Anyone".'));
-    }
-
-    const startTime = Date.now();
-
-    // Strategy 1: JSONP Script-tag Ping (Bypasses all CORS preflights and 302 echo redirect blocks)
-    try {
-      const jsonpResult = await new Promise((res, rej) => {
-        const callbackName = 'gdrive_ping_' + Math.floor(Math.random() * 1000000);
-        const script = document.createElement('script');
-        let timer = null;
-
-        const cleanup = () => {
-          if (timer) clearTimeout(timer);
-          try { delete window[callbackName]; } catch (e) {}
-          if (script.parentNode) script.parentNode.removeChild(script);
-        };
-
-        timer = setTimeout(() => {
-          cleanup();
-          rej(new Error('JSONP Timeout'));
-        }, 5000);
-
-        window[callbackName] = (gasData) => {
-          cleanup();
-          res(gasData);
-        };
-
-        script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + callbackName + '&action=ping&t=' + Date.now();
-        script.onerror = (e) => {
-          cleanup();
-          rej(new Error('Script load error'));
-        };
-        document.body.appendChild(script);
-      });
-
-      if (jsonpResult && jsonpResult.success) {
-        const latencyMs = Date.now() - startTime;
-        return resolve({
-          success: true,
-          message: jsonpResult.message || 'Koneksi ke Google Drive aktif!',
-          latencyMs,
-          userEmail: jsonpResult.userEmail || 'Akun Google'
-        });
-      }
-    } catch (jsonpErr) {
-      console.warn('JSONP ping strategy fallback, trying POST:', jsonpErr);
-    }
-
-    // Strategy 2: POST Ping Test with text/plain (CORS Simple Request)
-    try {
-      const postRes = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
-        body: JSON.stringify({ action: 'ping' }),
-        redirect: 'follow'
-      });
-
-      const text = await postRes.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (jsonErr) {
-        if (text.includes('accounts.google.com') || text.includes('ServiceLogin') || text.includes('<!DOCTYPE html>')) {
-          return reject(new Error('Akses Google Drive ditolak (memerlukan login). Buka script.google.com > Deploy > Manage Deployments > Edit > Ubah "Who has access" menjadi "Anyone" (Siapa saja) > Klik Deploy.'));
-        }
-        return reject(new Error(`Respon Google Apps Script bukan JSON: ${text.substring(0, 120)}`));
-      }
-
-      const latencyMs = Date.now() - startTime;
-
-      if (data && data.success) {
-        return resolve({
-          success: true,
-          message: data.message || 'Koneksi ke Google Drive aktif!',
-          latencyMs,
-          userEmail: data.userEmail || 'Akun Google'
-        });
-      } else {
-        return reject(new Error(data?.message || 'Respon Google Drive tidak sesuai format'));
-      }
-    } catch (postErr) {
-      console.warn('POST ping strategy fallback, trying GET:', postErr);
-    }
-
-    // Strategy 3: GET Ping Test with redirect follow
-    try {
-      const getUrl = url + (url.includes('?') ? '&' : '?') + 'action=ping&t=' + Date.now();
-      const getRes = await fetch(getUrl, {
-        method: 'GET',
-        redirect: 'follow'
-      });
-
-      const getText = await getRes.text();
-      let getData;
-      try {
-        getData = JSON.parse(getText);
-      } catch (e) {}
-
-      if (getData && getData.success) {
-        const latencyMs = Date.now() - startTime;
-        return resolve({
-          success: true,
-          message: getData.message || 'Koneksi ke Google Drive aktif!',
-          latencyMs,
-          userEmail: getData.userEmail || 'Akun Google'
-        });
-      }
-    } catch (getErr) {
-      console.warn('GET ping strategy fallback:', getErr);
-    }
-
-    return reject(new Error('Akses Google Apps Script terblokir (Failed to fetch).\n\nLangkah perbaikan di Google Apps Script (script.google.com):\n1. Buka Deploy > Manage Deployments > Edit\n2. Ubah "Who has access" menjadi "Anyone" (Siapa saja)\n3. Pastikan sudah menyalin kode Code.gs terbaru ke script.google.com dan deploy "New version".'));
+export function testGoogleDriveConnection() {
+  return Promise.resolve({
+    success: false,
+    message: 'Google Drive dinonaktifkan (Project berjalan dalam Mode Lokal Penuh)'
   });
 }
 
 /**
- * Uploads a file directly to Google Drive via Google Apps Script Web App
+ * Uploads a file directly to Google Drive (Disabled - returns local Base64)
  */
-export async function uploadToGoogleDrive({
-  file,
-  fileName = '',
-  folderContext = {},
-  webAppUrl = ''
-}) {
+export async function uploadToGoogleDrive({ file }) {
   if (!file) {
     throw new Error('Tidak ada berkas yang dipilih');
   }
-
-  const config = getGoogleDriveConfig();
-  const targetUrl = (webAppUrl || config.webAppUrl || '').trim();
-
-  if (!targetUrl) {
-    throw new Error('Google Drive Web App URL belum dikonfigurasi di menu Pengaturan');
-  }
-
-  const base64Data = await fileToBase64(file);
-  const now = new Date();
-  
-  const defaultYear = now.getFullYear().toString();
-  const monthNames = ['01-Januari', '02-Februari', '03-Maret', '04-April', '05-Mei', '06-Juni', '07-Juli', '08-Agustus', '09-September', '10-Oktober', '11-November', '12-Desember'];
-  const defaultMonth = monthNames[now.getMonth()];
-
-  const payload = {
-    action: 'uploadFile',
-    rootFolder: folderContext.rootFolder || config.rootFolder || 'BKI_DOKUMEN_SURAT',
-    year: folderContext.year || defaultYear,
-    month: folderContext.month || defaultMonth,
-    subFolder: folderContext.subFolder || folderContext.agenda || folderContext.namaKapal || 'UMUM',
-    category: folderContext.category || folderContext.title || 'Dokumen_Lampiran',
-    fileName: fileName || file.name,
-    mimeType: file.type || 'application/octet-stream',
-    base64Data
-  };
-
-  const response = await fetch(targetUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8'
-    },
-    body: JSON.stringify(payload),
-    redirect: 'follow'
-  });
-
-  const text = await response.text();
-  let resJson;
-  try {
-    resJson = JSON.parse(text);
-  } catch (parseErr) {
-    if (text.includes('accounts.google.com') || text.includes('ServiceLogin') || text.includes('<!DOCTYPE html>')) {
-      throw new Error('Google Drive Web App memerlukan akses publik. Pastikan pengaturan "Who has access" diset ke "Anyone".');
-    }
-    throw new Error(`Respon Google Drive tidak valid: ${text.substring(0, 120)}`);
-  }
-
-  if (!resJson || !resJson.success) {
-    throw new Error(resJson?.message || 'Gagal mengunggah berkas ke Google Drive');
-  }
-
+  const base64 = await fileToBase64(file);
   return {
-    id: resJson.fileId,
-    name: resJson.fileName || file.name,
-    url: resJson.viewUrl || resJson.url,
-    viewUrl: resJson.viewUrl,
-    downloadUrl: resJson.downloadUrl,
-    directUrl: resJson.directUrl,
-    thumbnailUrl: resJson.thumbnailUrl || `https://lh3.googleusercontent.com/d/${resJson.fileId}=s800`,
-    folderUrl: resJson.folderUrl,
-    size: resJson.size || file.size,
-    mimeType: resJson.mimeType || file.type,
-    storageProvider: 'gdrive',
-    uploadedAt: resJson.uploadedAt || new Date().toISOString()
+    success: true,
+    fileId: `local_${Date.now()}`,
+    name: file.name,
+    url: base64,
+    viewUrl: base64,
+    downloadUrl: base64,
+    storageProvider: 'local'
   };
 }
 
 /**
- * Deletes a file or multiple files from Google Drive via Google Apps Script Web App
+ * Deletes a file from Google Drive (Safe No-op)
  */
-export async function deleteFromGoogleDrive(fileIdOrUrl, silent = false) {
-  const config = getGoogleDriveConfig();
-  const targetUrl = (config.webAppUrl || '').trim();
-
-  if (!targetUrl || !config.enabled) {
-    return { success: false, message: 'Google Drive tidak aktif' };
-  }
-
-  if (!fileIdOrUrl) {
-    return { success: false, message: 'Tidak ada file untuk dihapus' };
-  }
-
-  const rawStr = typeof fileIdOrUrl === 'object' ? JSON.stringify(fileIdOrUrl) : String(fileIdOrUrl);
-  
-  // Extract all Google Drive file IDs from the string
-  const ids = new Set();
-  const patterns = [
-    /\/file\/d\/([a-zA-Z0-9_-]{20,})/g,
-    /\/d\/([a-zA-Z0-9_-]{20,})/g,
-    /id=([a-zA-Z0-9_-]{20,})/g,
-    /([a-zA-Z0-9_-]{28,})/g // standalone drive file ID (usually ~33 chars)
-  ];
-
-  for (const regex of patterns) {
-    const matches = rawStr.matchAll(regex);
-    for (const m of matches) {
-      if (m[1] && m[1].length >= 20 && !m[1].startsWith('http') && !m[1].includes(' ')) {
-        ids.add(m[1]);
-      }
-    }
-  }
-
-  if (ids.size === 0) {
-    return { success: false, message: 'ID file Google Drive tidak ditemukan' };
-  }
-
-  const results = [];
-  for (const fileId of ids) {
-    try {
-      const response = await fetch(targetUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'deleteFile', fileId }),
-        redirect: 'follow'
-      });
-
-      const text = await response.text();
-      let resJson;
-      try {
-        resJson = JSON.parse(text);
-      } catch (e) {
-        resJson = { success: false, message: text.substring(0, 120) };
-      }
-
-      if (resJson?.success) {
-        if (!silent) toast.success(`File Google Drive (${resJson.fileName || 'Lampiran'}) dipindahkan ke Sampah`);
-      } else {
-        console.warn('Google Drive delete error response:', resJson);
-      }
-      results.push(resJson);
-    } catch (err) {
-      console.warn('Google Drive delete network error:', err);
-      results.push({ success: false, message: err.message });
-    }
-  }
-
-  return {
-    success: results.some(r => r?.success),
-    results
-  };
+export async function deleteFromGoogleDrive() {
+  return { success: true, message: 'Mode lokal' };
 }
 
 /**
  * Checks if a given URL string points to Google Drive
  */
 export function isGoogleDriveUrl(url) {
-  if (!url) return false;
-  const str = typeof url === 'object' ? JSON.stringify(url) : String(url);
-  return str.includes('drive.google.com') || str.includes('googleusercontent.com/d/') || str.includes('google.com/macros');
+  if (!url || typeof url !== 'string') return false;
+  return url.includes('drive.google.com') || url.includes('googleusercontent.com/d/') || url.includes('google.com/macros');
 }
 
 /**
@@ -379,8 +105,6 @@ export function isGoogleDriveUrl(url) {
  */
 export function extractGDriveFileId(url) {
   if (!url || typeof url !== 'string') return null;
-  const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
-                url.match(/id=([a-zA-Z0-9_-]+)/) ||
-                url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  return match ? match[1] : null;
+  const match = url.match(/[-\w]{25,}/);
+  return match ? match[0] : null;
 }

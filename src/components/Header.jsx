@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sun, Moon, RotateCcw, LogOut, User, Menu, Monitor } from 'lucide-react';
+import { Sun, Moon, RotateCcw, LogOut, User, Menu } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
@@ -19,7 +19,7 @@ export const Header = ({ theme, setTheme, setIsMobileMenuOpen, setActiveTab }) =
     try {
       await resetData();
       setIsResetConfirmOpen(false);
-      toast.success('Data SPS, PDS, Laporan, dan Kwitansi berhasil direset! (Data Tarif, User, dan Kapal tetap tersimpan)');
+      toast.success('Data berhasil direset ke kondisi Demo Default! (5 Surat Tugas, 3 Kwitansi, 2 Laporan)');
     } catch (e) {
       toast.error('Gagal mereset data.');
       console.error(e);

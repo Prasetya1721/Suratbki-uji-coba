@@ -3,9 +3,7 @@ import {
   BookOpen,
   Search,
   Printer,
-  Calendar,
   RotateCcw,
-  User,
   ArrowUpDown,
   FileSpreadsheet,
   Calculator,
@@ -24,9 +22,7 @@ import {
   MessageSquare,
   Clock,
   AlertTriangle,
-  Ship,
-  UploadCloud,
-  Plus
+  UploadCloud
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { toast } from 'react-hot-toast';
@@ -40,6 +36,7 @@ import { AttachmentPreviewModal } from './AttachmentPreviewModal';
 import { BukuAgendaPrintModal } from './BukuAgendaPrintModal';
 import { SuratTugasPdsPrintModal } from './SuratTugasPdsPrintModal';
 import { BiayaPdsPrintModal } from './BiayaPdsPrintModal';
+import { BiayaPdsLuarNegeriPrintModal } from './BiayaPdsLuarNegeriPrintModal';
 import { TandaTerimaSmcPrintModal } from './TandaTerimaSmcPrintModal';
 import { ShipAttachmentsUpload } from './ShipAttachmentsUpload';
 
@@ -64,6 +61,7 @@ export const BukuAgendaTable = () => {
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isPdsPrintModalOpen, setIsPdsPrintModalOpen] = useState(false);
   const [isBiayaPrintModalOpen, setIsBiayaPrintModalOpen] = useState(false);
+  const [isBiayaLnPrintModalOpen, setIsBiayaLnPrintModalOpen] = useState(false);
   const [isSmcPrintModalOpen, setIsSmcPrintModalOpen] = useState(false);
   const [selectedPrintItem, setSelectedPrintItem] = useState(null);
   const [selectedSmcItem, setSelectedSmcItem] = useState(null);
@@ -434,8 +432,13 @@ export const BukuAgendaTable = () => {
   };
 
   const handleOpenBiayaPrint = (item) => {
-    setSelectedPrintItem(resolvePdsItem(item));
-    setIsBiayaPrintModalOpen(true);
+    const resolved = resolvePdsItem(item);
+    setSelectedPrintItem(resolved);
+    if (resolved?.isLuarNegeri || resolved?.pdsType === 'luar_negeri') {
+      setIsBiayaLnPrintModalOpen(true);
+    } else {
+      setIsBiayaPrintModalOpen(true);
+    }
   };
 
   const handleOpenPdsPrint = (item) => {
@@ -1849,6 +1852,12 @@ export const BukuAgendaTable = () => {
       <BiayaPdsPrintModal
         isOpen={isBiayaPrintModalOpen}
         onClose={() => setIsBiayaPrintModalOpen(false)}
+        suratTugas={selectedPrintItem}
+      />
+
+      <BiayaPdsLuarNegeriPrintModal
+        isOpen={isBiayaLnPrintModalOpen}
+        onClose={() => setIsBiayaLnPrintModalOpen(false)}
         suratTugas={selectedPrintItem}
       />
 

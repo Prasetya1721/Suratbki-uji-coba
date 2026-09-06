@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Upload, X, Eye, FileText, Image as ImageIcon, Plus, Check, Loader2, HardDrive, ExternalLink } from 'lucide-react';
+import { Upload, X, Eye, FileText, Image as ImageIcon, Plus, Check, Loader2, HardDrive } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { validateFileUpload } from '../utils/security';

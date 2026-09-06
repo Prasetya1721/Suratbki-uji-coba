@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Clock, MapPin, Anchor, UserCheck, Calendar, Hourglass, Zap, Lock } from 'lucide-react';
+import { X, Check, Clock, MapPin, Anchor, UserCheck, Calendar, Hourglass, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ModalPortal } from './ModalPortal';
 import { useData } from '../context/DataContext';

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Trash2, X, RotateCcw, Lock, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, Trash2, X, RotateCcw, Lock } from 'lucide-react';
 import { ModalPortal } from './ModalPortal';
 import { useAuth } from '../context/AuthContext';
-import { verifyPassword } from '../utils/security';
 
 export const ConfirmModal = ({
   isOpen,

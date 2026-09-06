@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, UserCheck, Eye, EyeOff, FileCheck2, Trash2, Upload, Sparkles } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { X, Save, UserCheck, Eye, EyeOff, FileCheck2, Trash2, Upload } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { ModalPortal } from './ModalPortal';
@@ -111,14 +110,7 @@ export const UserModal = ({ isOpen, onClose, editItem = null }) => {
         signatureUrl: dataUrl
       }));
 
-      // Background cloud upload if Supabase is connected
-      if (supabase) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `ttd_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `signatures/${fileName}`;
-        supabase.storage.from('lampiran').upload(filePath, file).catch(() => {});
-      }
-    } catch (err) {
+      } catch (err) {
       console.error('Signature upload failed:', err);
       setErrorMsg('Gagal memproses file tanda tangan. Pastikan berkas berupa gambar valid.');
     } finally {

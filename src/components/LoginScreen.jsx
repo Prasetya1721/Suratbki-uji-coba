@@ -5,7 +5,7 @@ import { ForgotPasswordModal } from './ForgotPasswordModal';
 import { BKILogo } from './BKILogo';
 import { IDSurveyLogo } from './IDSurveyLogo';
 import { DanantaraLogo } from './DanantaraLogo';
-import { checkLoginLock } from '../utils/security';
+import { checkLoginLock, resetLoginAttempts } from '../utils/security';
 
 export const LoginScreen = () => {
   const { login } = useAuth();
@@ -336,7 +336,72 @@ export const LoginScreen = () => {
             </button>
           </form>
 
-          <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-color)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          {/* Quick Demo Login for testing */}
+          <div style={{ marginTop: '1.25rem', padding: '0.75rem', background: 'var(--bg-main)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-color)' }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              ⚡ Masuk Cepat Akun Uji Coba:
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.4rem' }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: '0.72rem', padding: '0.35rem 0.5rem', justifyContent: 'flex-start', fontWeight: 700 }}
+                onClick={() => {
+                  resetLoginAttempts();
+                  setLockCountdown(0);
+                  setFailedAttempts(0);
+                  setErrorMessage('');
+                  login('renza', 'password123');
+                }}
+              >
+                👑 Admin (Renza)
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: '0.72rem', padding: '0.35rem 0.5rem', justifyContent: 'flex-start', fontWeight: 700 }}
+                onClick={() => {
+                  resetLoginAttempts();
+                  setLockCountdown(0);
+                  setFailedAttempts(0);
+                  setErrorMessage('');
+                  login('muhson', 'password123');
+                }}
+              >
+                🏢 Kacab (Muhson)
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: '0.72rem', padding: '0.35rem 0.5rem', justifyContent: 'flex-start', fontWeight: 700, color: '#047857', borderColor: '#a7f3d0', background: '#ecfdf5' }}
+                onClick={() => {
+                  resetLoginAttempts();
+                  setLockCountdown(0);
+                  setFailedAttempts(0);
+                  setErrorMessage('');
+                  login('tri', 'password123');
+                }}
+              >
+                🌐 PDS Luar Negeri (Tri)
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: '0.72rem', padding: '0.35rem 0.5rem', justifyContent: 'flex-start', fontWeight: 700 }}
+                onClick={() => {
+                  resetLoginAttempts();
+                  setLockCountdown(0);
+                  setFailedAttempts(0);
+                  setErrorMessage('');
+                  login('bone', 'password123');
+                }}
+              >
+                ⚓ Surveyor (Bone)
+              </button>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             🔒 Portal Resmi PT Biro Klasifikasi Indonesia (Persero) • IDSurvey
           </div>
         </div>

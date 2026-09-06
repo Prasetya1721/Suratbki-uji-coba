@@ -1,10 +1,10 @@
 import { supabase } from '../lib/supabase';
 import React, { useState, useEffect } from 'react';
-import { X, Save, Anchor, Printer, Lock, Camera, FileCheck2, Plane, Receipt, MapPin, Calendar, Hash, FileText, Sparkles, Eye, Check, ClipboardList, UserCheck, User } from 'lucide-react';
+import { X, Save, Anchor, Lock, FileCheck2, Plane, Receipt, MapPin, Calendar, Eye, ClipboardList, UserCheck } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
-import { isEditWindowExpired, formatRupiah, cleanDocNumber, formatDateIndo, extractAgendaNumber } from '../utils/formatters';
+import { isEditWindowExpired, formatRupiah, formatDateIndo, extractAgendaNumber } from '../utils/formatters';
 import { filterDataByRole } from '../utils/filterData';
 import { ModalPortal } from './ModalPortal';
 import { sanitizeFormData, validateFileUpload } from '../utils/security';

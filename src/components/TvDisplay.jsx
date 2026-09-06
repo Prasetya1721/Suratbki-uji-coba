@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  X, MapPin, Anchor, UserCheck, CheckCircle, LogOut, Plus,
-  Clock, Navigation, Edit, Trash2, Layers, AlertCircle, Check, Hourglass,
+  X, MapPin, Anchor, UserCheck, LogOut,
+  Clock, Navigation,
   ChevronLeft, ChevronRight, Calendar, RotateCcw, Sun, Moon
 } from 'lucide-react';
 import { useData } from '../context/DataContext';

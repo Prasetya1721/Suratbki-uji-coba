@@ -4,21 +4,15 @@ import {
   X,
   Save,
   Anchor,
-  Ticket,
-  Printer,
   Sparkles,
   MapPin,
   Calendar,
   FileText,
-  Camera,
-  FileCheck2,
   Plane,
   Receipt,
   Trash2,
   Layers,
-  Calculator,
   AlertCircle,
-  Clock,
   Plus,
   ChevronDown,
   ChevronUp,
@@ -26,7 +20,6 @@ import {
   Check,
   Lock,
   Unlock,
-  Eye,
   Pencil,
   Ship
 } from 'lucide-react';
@@ -45,7 +38,7 @@ import { AttachmentPreviewModal } from './AttachmentPreviewModal';
 import { ShipAttachmentsUpload } from './ShipAttachmentsUpload';
 import { deleteFromGoogleDrive, isGoogleDriveUrl } from '../utils/googleDriveService';
 import { MultiDocUpload } from './MultiDocUpload';
-import { countHolidaysAndWeekendsInRange, checkHolidayOrWeekend } from '../utils/holidays';
+import { countHolidaysAndWeekendsInRange } from '../utils/holidays';
 import { filterDataByRole, findSurveyorUser } from '../utils/filterData';
 
 export const PdsModal = ({ isOpen, onClose, editItem = null, onPrint = null }) => {

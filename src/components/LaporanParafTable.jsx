@@ -5,12 +5,8 @@ import {
   Calendar,
   Clock,
   RotateCcw,
-  Anchor,
-  User,
-  MapPin,
   FileText,
   ArrowUpDown,
-  Phone,
   FileCheck,
   FileSpreadsheet,
   ChevronDown,
@@ -22,7 +18,7 @@ import ExcelJS from 'exceljs';
 import { toast } from 'react-hot-toast';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
-import { formatDateIndo, cleanDocNumber } from '../utils/formatters';
+import { formatDateIndo } from '../utils/formatters';
 import { filterDataByRole, isSameSurveyor, findSurveyorUser } from '../utils/filterData';
 import { LampiranParafPrintModal } from './LampiranParafPrintModal';
 import { SuratTugasPrintModal } from './SuratTugasPrintModal';

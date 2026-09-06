@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Clock, Plus, Search, Filter, Monitor, Edit2, Trash2, CheckCircle,
-  MapPin, Anchor, UserCheck, Calendar, Hourglass, Check, RotateCcw,
+  Clock, Plus, Search, Filter, Monitor, Edit2, Trash2, Check,
   FileSpreadsheet, Printer
 } from 'lucide-react';
 import ExcelJS from 'exceljs';

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { Camera, X, Plus, Image as ImageIcon, Eye, Trash2, Upload, FileText, CheckCircle2, HardDrive } from 'lucide-react';
+import { Camera, X, Image as ImageIcon, Eye, Trash2, Upload, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { validateFileUpload } from '../utils/security';
 import { uploadUniversalFile } from '../utils/fileStorageHelper';

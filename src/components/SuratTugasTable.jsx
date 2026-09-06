@@ -1,8 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Plus,
   Search,
-  Eye,
   Edit2,
   Trash2,
   FileText,
@@ -11,13 +10,10 @@ import {
   MapPin,
   Anchor,
   Printer,
-  FileSpreadsheet,
   ArrowUpDown,
   Filter,
   RotateCcw,
   Clock,
-  CheckCircle2,
-  FileCheck,
   Calculator,
   Lock,
   Unlock,
@@ -26,7 +22,7 @@ import {
   AlertTriangle,
   Send,
   CheckCheck,
-  Ship
+  Globe
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useData } from '../context/DataContext';
@@ -35,9 +31,11 @@ import { formatDateIndo, getStatusBadgeClass, cleanDocNumber, formatRupiah, isDo
 import { filterDataByRole, isSameSurveyor } from '../utils/filterData';
 import { SpsModal } from './SpsModal';
 import { PdsModal } from './PdsModal';
+import { PdsLuarNegeriModal } from './PdsLuarNegeriModal';
 import { SuratTugasPrintModal } from './SuratTugasPrintModal';
 import { SuratTugasPdsPrintModal } from './SuratTugasPdsPrintModal';
 import { BiayaPdsPrintModal } from './BiayaPdsPrintModal';
+import { BiayaPdsLuarNegeriPrintModal } from './BiayaPdsLuarNegeriPrintModal';
 import { LampiranParafPrintModal } from './LampiranParafPrintModal';
 import { TandaTerimaSmcPrintModal } from './TandaTerimaSmcPrintModal';
 import { ConfirmModal } from './ConfirmModal';
@@ -69,12 +67,24 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
   // Modals
   const [isSpsModalOpen, setIsSpsModalOpen] = useState(false);
   const [isPdsModalOpen, setIsPdsModalOpen] = useState(false);
+  const [isPdsLuarNegeriModalOpen, setIsPdsLuarNegeriModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+
+  const [pdsSubTab, setPdsSubTab] = useState(() => {
+    if (filterType === 'PDS_LUAR') return 'LUAR';
+    return 'DALAM';
+  });
+
+  useEffect(() => {
+    if (filterType === 'PDS_LUAR') setPdsSubTab('LUAR');
+    else if (filterType === 'PDS_DALAM') setPdsSubTab('DALAM');
+  }, [filterType]);
 
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isPdsPrintModalOpen, setIsPdsPrintModalOpen] = useState(false);
   const [isParafModalOpen, setIsParafModalOpen] = useState(false);
   const [isBiayaPrintModalOpen, setIsBiayaPrintModalOpen] = useState(false);
+  const [isBiayaLuarNegeriPrintModalOpen, setIsBiayaLuarNegeriPrintModalOpen] = useState(false);
   const [isSmcPrintModalOpen, setIsSmcPrintModalOpen] = useState(false);
   const [selectedPrintItem, setSelectedPrintItem] = useState(null);
   const [selectedParafItem, setSelectedParafItem] = useState(null);
@@ -274,13 +284,23 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
 
     // 1. Filter
     const result = roleFiltered.filter((item) => {
-      // Filter Type: SPS vs PDS
+      // Filter Type: SPS vs PDS_DALAM vs PDS_LUAR vs PDS
       if (effectiveFilterType === 'SPS') {
         const isPdsOnly = item.docType === 'PDS';
         if (isPdsOnly) return false;
+      } else if (effectiveFilterType === 'PDS_DALAM') {
+        const isPds = item.docType === 'PDS' || item.isPds || (item.status !== 'Menunggu Survei' && !item.isSps);
+        const isLN = item.isLuarNegeri === true || item.pdsType === 'luar_negeri';
+        if (!isPds || isLN) return false;
+      } else if (effectiveFilterType === 'PDS_LUAR') {
+        const isLN = item.isLuarNegeri === true || item.pdsType === 'luar_negeri';
+        if (!isLN) return false;
       } else if (effectiveFilterType === 'PDS') {
         const isPds = item.docType === 'PDS' || item.isPds || (item.status !== 'Menunggu Survei' && !item.isSps);
         if (!isPds) return false;
+        const isLN = item.isLuarNegeri === true || item.pdsType === 'luar_negeri';
+        if (pdsSubTab === 'DALAM' && isLN) return false;
+        if (pdsSubTab === 'LUAR' && !isLN) return false;
       }
 
       // Search
@@ -386,7 +406,7 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
     });
 
     return result;
-  }, [suratTugas, currentUser, role, filterType, searchTerm, statusFilter, surveyorFilter, selectedMonth, selectedYear, startDate, endDate, sortBy, usersList]);
+  }, [suratTugas, currentUser, role, filterType, effectiveFilterType, pdsSubTab, searchTerm, statusFilter, surveyorFilter, selectedMonth, selectedYear, startDate, endDate, sortBy, usersList]);
 
   // Statistics calculation
   const totalHariKegiatan = useMemo(() => {
@@ -395,16 +415,30 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
 
   const handleOpenAdd = () => {
     setEditingItem(null);
-    if (filterType === 'PDS') {
+    if (effectiveFilterType === 'PDS_LUAR' || (effectiveFilterType === 'PDS' && pdsSubTab === 'LUAR')) {
+      setIsPdsLuarNegeriModalOpen(true);
+    } else if (effectiveFilterType === 'PDS' || effectiveFilterType === 'PDS_DALAM') {
       setIsPdsModalOpen(true);
     } else {
       setIsSpsModalOpen(true);
     }
   };
 
+  const handleOpenAddPdsLuar = () => {
+    setEditingItem(null);
+    setIsPdsLuarNegeriModalOpen(true);
+  };
+
+  const handleOpenAddPdsDalam = () => {
+    setEditingItem(null);
+    setIsPdsModalOpen(true);
+  };
+
   const handleOpenEdit = (item) => {
     setEditingItem(item);
-    if (item.docType === 'PDS' || item.isPds || filterType === 'PDS') {
+    if (item.isLuarNegeri || item.pdsType === 'luar_negeri') {
+      setIsPdsLuarNegeriModalOpen(true);
+    } else if (item.docType === 'PDS' || item.isPds || effectiveFilterType.startsWith('PDS')) {
       setIsPdsModalOpen(true);
     } else {
       setIsSpsModalOpen(true);
@@ -423,7 +457,11 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
 
   const handleOpenBiayaPrint = (item) => {
     setSelectedPrintItem(item);
-    setIsBiayaPrintModalOpen(true);
+    if (item.isLuarNegeri || item.pdsType === 'luar_negeri') {
+      setIsBiayaLuarNegeriPrintModalOpen(true);
+    } else {
+      setIsBiayaPrintModalOpen(true);
+    }
   };
 
   const handleOpenParafPrint = (item) => {
@@ -457,11 +495,47 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
           </div>
           <div>
             <h2 className="card-title">
-              Daftar {effectiveFilterType === 'PDS' ? 'Perjalanan Dinas Surveyor (PDS)' : 'Surat Penunjukan Survey (SPS)'}
+              {effectiveFilterType === 'SPS' && 'Daftar Surat Penunjukan Survey (SPS)'}
+              {effectiveFilterType === 'PDS_DALAM' && 'Daftar PDS Dalam Negeri'}
+              {effectiveFilterType === 'PDS_LUAR' && 'Daftar PDS Luar Negeri (USD)'}
+              {effectiveFilterType === 'PDS' && (pdsSubTab === 'LUAR' ? 'Daftar PDS Luar Negeri (USD)' : 'Daftar PDS Dalam Negeri')}
             </h2>
             <div className="card-subtitle">
               Kelola penugasan marine surveyor, sortir multi-hari & multi-bulan operasional
             </div>
+            {effectiveFilterType.startsWith('PDS') && (
+              <div style={{ display: 'inline-flex', background: 'var(--bg-main)', padding: '0.15rem', borderRadius: '6px', border: '1px solid var(--border-color)', gap: '0.2rem', marginTop: '0.4rem' }}>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${pdsSubTab === 'DALAM' && effectiveFilterType !== 'PDS_LUAR' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setPdsSubTab('DALAM')}
+                  style={{
+                    fontSize: '0.74rem',
+                    padding: '0.15rem 0.6rem',
+                    borderRadius: '4px',
+                    fontWeight: 700
+                  }}
+                >
+                  🇮🇩 Dalam Negeri
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${pdsSubTab === 'LUAR' || effectiveFilterType === 'PDS_LUAR' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setPdsSubTab('LUAR')}
+                  style={{
+                    fontSize: '0.74rem',
+                    padding: '0.15rem 0.6rem',
+                    borderRadius: '4px',
+                    fontWeight: 700,
+                    background: (pdsSubTab === 'LUAR' || effectiveFilterType === 'PDS_LUAR') ? '#0284c7' : undefined,
+                    borderColor: (pdsSubTab === 'LUAR' || effectiveFilterType === 'PDS_LUAR') ? '#0284c7' : undefined
+                  }}
+                >
+                  <Globe size={12} style={{ marginRight: '0.25rem' }} />
+                  🌐 Luar Negeri (USD)
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -480,19 +554,37 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
           )}
 
           {/* Tombol Buat Baru: Surveyor / Admin / Kacab / Dev untuk SPS & PDS */}
-          {effectiveFilterType === 'PDS' ? (
-            canCreatePds && (
-              <button className="btn btn-primary" onClick={handleOpenAdd}>
-                <Plus size={16} />
-                <span>Buat PDS Baru</span>
-              </button>
-            )
-          ) : (
+          {effectiveFilterType === 'SPS' ? (
             canCreateSps && (
               <button className="btn btn-primary" onClick={handleOpenAdd}>
                 <Plus size={16} />
                 <span>Buat SPS Baru</span>
               </button>
+            )
+          ) : (
+            canCreatePds && (
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleOpenAddPdsDalam}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700 }}
+                  title="Buat PDS Baru Perjalanan Domestik"
+                >
+                  <Plus size={15} />
+                  <span>+ PDS Dalam Negeri</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleOpenAddPdsLuar}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#0284c7', borderColor: '#0284c7', fontWeight: 800 }}
+                  title="Buat PDS Baru Perjalanan Mancanegara (USD)"
+                >
+                  <Globe size={15} />
+                  <span>+ PDS Luar Negeri</span>
+                </button>
+              </div>
             )
           )}
         </div>
@@ -830,7 +922,7 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
         <table className="data-table">
           <thead>
             <tr>
-              {filterType === 'PDS' ? (
+              {effectiveFilterType !== 'SPS' ? (
                 <th onClick={() => setSortBy(sortBy === 'nomor_asc' ? 'nomor_desc' : 'nomor_asc')} style={{ cursor: 'pointer' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     <span>Nomor Surat PDS</span>
@@ -845,12 +937,12 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
 
               <th onClick={() => setSortBy(sortBy === 'kapal_asc' ? 'kapal_desc' : 'kapal_asc')} style={{ cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <span>{filterType === 'PDS' ? 'Daftar Kapal & Agenda Terkait' : 'Nama Kapal / Pemohon'}</span>
+                  <span>{effectiveFilterType !== 'SPS' ? 'Daftar Kapal & Agenda Terkait' : 'Nama Kapal / Pemohon'}</span>
                   <ArrowUpDown size={12} color="var(--text-muted)" />
                 </div>
               </th>
 
-              {filterType === 'SPS' && <th>Perihal / Agenda / Order</th>}
+              {effectiveFilterType === 'SPS' && <th>Perihal / Agenda / Order</th>}
 
               <th onClick={() => setSortBy(sortBy === 'petugas_asc' ? 'petugas_desc' : 'petugas_asc')} style={{ cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -863,12 +955,12 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
 
               <th onClick={() => setSortBy(sortBy === 'tgl_desc' ? 'tgl_asc' : 'tgl_desc')} style={{ cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <span>{filterType === 'PDS' ? 'Periode Pelaksanaan' : 'Tanggal Mulai'}</span>
+                  <span>{effectiveFilterType !== 'SPS' ? 'Periode Pelaksanaan' : 'Tanggal Mulai'}</span>
                   <ArrowUpDown size={12} color="var(--text-muted)" />
                 </div>
               </th>
 
-              {filterType === 'PDS' && <th>Total Biaya</th>}
+              {effectiveFilterType !== 'SPS' && <th>Total Biaya</th>}
 
               <th>Status</th>
               <th style={{ textAlign: 'right' }}>Aksi</th>
@@ -877,9 +969,9 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
           <tbody>
             {filteredAndSortedData.length === 0 ? (
               <tr>
-                <td colSpan={filterType === 'PDS' ? 8 : 8} className="table-empty">
+                <td colSpan={effectiveFilterType !== 'SPS' ? 8 : 8} className="table-empty">
                   <div className="table-empty-icon">📄</div>
-                  <p>Tidak ada {filterType === 'PDS' ? 'Perjalanan Dinas Surveyor (PDS)' : 'Surat Penunjukan Survey (SPS)'} yang sesuai dengan filter.</p>
+                  <p>Tidak ada data penugasan yang sesuai dengan filter.</p>
                   {hasActiveFilters && (
                     <button
                       type="button"
@@ -896,15 +988,54 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
               filteredAndSortedData.map((item) => {
                 const daysCount = calculateDays(item.tglMulai, item.tglSelesai);
                 const hasShipsDetail = Array.isArray(item.shipsDetail) && item.shipsDetail.length > 0;
+                const isItemLuar = item.isLuarNegeri || item.pdsType === 'luar_negeri';
 
                 return (
                   <tr key={item.id}>
                     {/* Column 1: No Surat PDS or No Agenda SPS */}
-                    {filterType === 'PDS' ? (
+                    {effectiveFilterType !== 'SPS' ? (
                       <td>
-                        <span style={{ fontWeight: 800, color: 'var(--accent-primary)' }}>
-                          {cleanDocNumber(item.nomor)}
-                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <span style={{ fontWeight: 800, color: 'var(--accent-primary)' }}>
+                            {cleanDocNumber(item.nomor)}
+                          </span>
+                          {isItemLuar ? (
+                            <span
+                              className="badge"
+                              style={{
+                                background: '#e0f2fe',
+                                color: '#0369a1',
+                                border: '1px solid #bae6fd',
+                                fontWeight: 800,
+                                fontSize: '0.66rem',
+                                padding: '0.1rem 0.35rem',
+                                borderRadius: '4px',
+                                width: 'fit-content',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                              }}
+                            >
+                              <Globe size={11} /> Luar Negeri (${item.totalUsd || 0})
+                            </span>
+                          ) : (
+                            <span
+                              className="badge"
+                              style={{
+                                background: '#ecfdf5',
+                                color: '#047857',
+                                border: '1px solid #a7f3d0',
+                                fontWeight: 700,
+                                fontSize: '0.66rem',
+                                padding: '0.1rem 0.35rem',
+                                borderRadius: '4px',
+                                width: 'fit-content'
+                              }}
+                            >
+                              🇮🇩 Dalam Negeri
+                            </span>
+                          )}
+                        </div>
                       </td>
                     ) : (
                       <td>
@@ -925,7 +1056,7 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
 
                     {/* Column 2: Nama Kapal & Detail */}
                     <td>
-                      {filterType === 'PDS' && hasShipsDetail ? (
+                      {effectiveFilterType !== 'SPS' && hasShipsDetail ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                           {item.shipsDetail.map((sh, sIdx) => (
                             <div key={sh.spsId || sIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem' }}>
@@ -942,6 +1073,11 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                             <Anchor size={15} color="var(--accent-primary)" />
                             <span>{item.namaKapal || 'KAPAL SURVEY'}</span>
+                            {item.negaraTujuan && (
+                              <span style={{ fontSize: '0.72rem', color: '#0369a1', background: '#f0f9ff', border: '1px solid #bae6fd', padding: '0.1rem 0.35rem', borderRadius: '3px', fontWeight: 800 }}>
+                                📍 {item.negaraTujuan}
+                              </span>
+                            )}
                           </div>
                           {item.pemohon && (
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
@@ -953,7 +1089,7 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
                     </td>
 
                     {/* Column 3: SPS Details (Perihal/Agenda/Order) */}
-                    {filterType === 'SPS' && (
+                    {effectiveFilterType === 'SPS' && (
                       <td style={{ maxWidth: '240px' }}>
                         <div style={{ fontWeight: 600 }}>{item.jenisSurvey || item.perihal}</div>
                         {item.noOrder && (
@@ -988,7 +1124,7 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
 
                     {/* Column 6: Periode / Tanggal Mulai */}
                     <td>
-                      {filterType === 'PDS' ? (
+                      {effectiveFilterType !== 'SPS' ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem' }}>
                             <Calendar size={13} color="var(--text-muted)" />
@@ -1040,11 +1176,22 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
                     </td>
 
                     {/* Column 7: PDS Total Biaya */}
-                    {filterType === 'PDS' && (
+                    {effectiveFilterType !== 'SPS' && (
                       <td>
-                        <span style={{ fontWeight: 800, color: '#059669', fontSize: '0.85rem' }}>
-                          {formatRupiah(item.jumlahEstimasi || (Number(item.tarifDasar || 0) + Number(item.biayaTiket || 0)))}
-                        </span>
+                        {isItemLuar ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                            <span style={{ fontWeight: 800, color: '#0284c7', fontSize: '0.85rem' }}>
+                              {formatRupiah(item.totalIdrTerima || item.jumlahEstimasi)}
+                            </span>
+                            <span style={{ fontSize: '0.72rem', color: '#0369a1', fontWeight: 700 }}>
+                              ${Number(item.totalUsd || 0).toLocaleString('en-US')} USD
+                            </span>
+                          </div>
+                        ) : (
+                          <span style={{ fontWeight: 800, color: '#059669', fontSize: '0.85rem' }}>
+                            {formatRupiah(item.jumlahEstimasi || (Number(item.tarifDasar || 0) + Number(item.biayaTiket || 0)))}
+                          </span>
+                        )}
                       </td>
                     )}
 
@@ -1349,7 +1496,7 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
                           </>
                         )}
 
-                        {effectiveFilterType !== 'PDS' && (
+                        {effectiveFilterType === 'SPS' && (
                           <button
                             className="btn btn-primary btn-icon btn-sm"
                             onClick={() => handleOpenPrint(item)}
@@ -1364,7 +1511,9 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
                               className="btn btn-secondary btn-icon btn-sm"
                               onClick={() => handleOpenBiayaPrint(item)}
                               title={
-                                (item.isSmc || (item.perihal || '').toUpperCase().includes('SMC') || (item.jenisSurvey || '').toUpperCase().includes('SMC'))
+                                (item.isLuarNegeri || item.pdsType === 'luar_negeri')
+                                  ? 'Download / Cetak PDF Rincian Biaya PDS Luar Negeri (USD) & Unduh Excel'
+                                  : (item.isSmc || (item.perihal || '').toUpperCase().includes('SMC') || (item.jenisSurvey || '').toUpperCase().includes('SMC'))
                                   ? 'Download / Cetak PDF Rincian Biaya + Tanda Terima SMC (1 File PDF Gabungan)'
                                   : 'Download / Cetak PDF Rincian Biaya Perjalanan Dinas (A4 Landscape)'
                               }
@@ -1451,6 +1600,11 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
         editItem={editingItem}
         onPrint={(item) => handleOpenPdsPrint(item)}
       />
+      <PdsLuarNegeriModal
+        isOpen={isPdsLuarNegeriModalOpen}
+        onClose={() => setIsPdsLuarNegeriModalOpen(false)}
+        editItem={editingItem}
+      />
 
       <SuratTugasPrintModal
         isOpen={isPrintModalOpen}
@@ -1467,6 +1621,11 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
       <BiayaPdsPrintModal
         isOpen={isBiayaPrintModalOpen}
         onClose={() => setIsBiayaPrintModalOpen(false)}
+        suratTugas={selectedPrintItem}
+      />
+      <BiayaPdsLuarNegeriPrintModal
+        isOpen={isBiayaLuarNegeriPrintModalOpen}
+        onClose={() => setIsBiayaLuarNegeriPrintModalOpen(false)}
         suratTugas={selectedPrintItem}
       />
 

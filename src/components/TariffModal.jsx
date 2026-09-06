@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, MapPin, DollarSign, Navigation, Sparkles } from 'lucide-react';
+import { X, Save, MapPin, Sparkles } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { formatRupiah } from '../utils/formatters';
 import { ModalPortal } from './ModalPortal';

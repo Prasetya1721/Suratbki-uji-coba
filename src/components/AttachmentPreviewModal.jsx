@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Download, FileText, Image as ImageIcon, ChevronLeft, ChevronRight, Files, ExternalLink, Loader2, ZoomIn, ZoomOut, RotateCw, HardDrive, AlertCircle } from 'lucide-react';
+import { X, Download, FileText, Image as ImageIcon, ChevronLeft, ChevronRight, Files, ExternalLink, Loader2, ZoomIn, ZoomOut, HardDrive } from 'lucide-react';
 import { ModalPortal } from './ModalPortal';
 import { parseAttachmentFiles } from '../utils/formatters';
 import { isGoogleDriveUrl, extractGDriveFileId } from '../utils/googleDriveService';
