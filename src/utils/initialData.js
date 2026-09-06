@@ -10,7 +10,7 @@
 export const INITIAL_SURAT_TUGAS = [
   {
     id: 'ST-DEMO-LN-001',
-    nomor: 'A 0    /SV.201/PK/KI-25',
+    nomor: 'A 0    /SV.201/PK/KI-26',
     noAgenda: 'AG-LN-001',
     agenda: 'AG-LN-001',
     namaKapal: 'LCT SHUN JUN 7',
@@ -28,8 +28,8 @@ export const INITIAL_SURAT_TUGAS = [
     jabatan: 'SURVEYOR',
     tempatSurvey: 'CHINA',
     lokasi: 'CHINA',
-    tglMulai: '2025-11-24',
-    tglSelesai: '2025-11-26',
+    tglMulai: '2026-09-01',
+    tglSelesai: '2026-09-03',
     // Rincian Luar Negeri (USD)
     hariLuarNegeri: 3,
     malamLuarNegeri: 2,
@@ -44,8 +44,8 @@ export const INITIAL_SURAT_TUGAS = [
     pakaianDinginUsd: 0,
     totalUsd: 450,
     // Rincian Transit Dalam Negeri (IDR)
-    tglMulaiTransit: '2025-11-09',
-    tglSelesaiTransit: '2025-11-11',
+    tglMulaiTransit: '2026-08-30',
+    tglSelesaiTransit: '2026-08-31',
     tiketDalamNegeri: 0,
     asalTujuanDlm: 750000,
     totalTransitIdr: 750000,
@@ -57,7 +57,7 @@ export const INITIAL_SURAT_TUGAS = [
     keteranganLain: 'TIKET, HOTEL DAN TAT DI LUAR NEGERI DITANGGUNG PEMOHON',
     status: 'Selesai',
     approvalStatus: 'ACC',
-    approvalDate: '2025-11-26T10:00:00.000Z',
+    approvalDate: '2026-09-03T10:00:00.000Z',
     approvedBy: 'MUHSON NURROCHMAT',
     kepalaCabang: 'MUHSON NURROCHMAT',
     nup: '48199-KI'

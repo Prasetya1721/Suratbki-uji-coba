@@ -94,6 +94,19 @@ export const DataProvider = ({ children }) => {
           parsed = [demoLN, ...parsed];
         }
       }
+      parsed = parsed.map((item) => {
+        if (item.id === 'ST-DEMO-LN-001' && item.tglMulai?.startsWith('2025')) {
+          return {
+            ...item,
+            nomor: 'A 0    /SV.201/PK/KI-26',
+            tglMulai: '2026-09-01',
+            tglSelesai: '2026-09-03',
+            tglMulaiTransit: '2026-08-30',
+            tglSelesaiTransit: '2026-08-31'
+          };
+        }
+        return item;
+      });
       return parsed.map(cleanEntityObject);
     }
     return [];

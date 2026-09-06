@@ -54,7 +54,7 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
 
   // Multi-Month & Year Filter
   const [selectedMonth, setSelectedMonth] = useState('Semua');
-  const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
+  const [selectedYear, setSelectedYear] = useState('Semua');
 
   // Multi-Day / Custom Date Range Filter
   const [datePreset, setDatePreset] = useState('all'); // all, today, this_week, this_month, custom
@@ -207,9 +207,17 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
 
   const yearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();
-    const years = ['Semua', String(currentYear + 1), String(currentYear), String(currentYear - 1), String(currentYear - 2)];
-    return Array.from(new Set(years));
-  }, []);
+    const docYears = (suratTugas || [])
+      .map((item) => (item.tglMulai || item.tglSelesai || '').substring(0, 4))
+      .filter((y) => y && y.length === 4);
+    const years = ['Semua', String(currentYear + 1), String(currentYear), String(currentYear - 1), String(currentYear - 2), ...docYears];
+    const unique = Array.from(new Set(years));
+    return unique.sort((a, b) => {
+      if (a === 'Semua') return -1;
+      if (b === 'Semua') return 1;
+      return Number(b) - Number(a);
+    });
+  }, [suratTugas]);
 
   const surveyors = useMemo(() => {
     const list = usersList?.filter(u => u.role === 'surveyor' || u.role === 'kacab') || [];
@@ -249,7 +257,7 @@ export const SuratTugasTable = ({ filterType = 'SPS' }) => {
     setStatusFilter('Semua');
     setSurveyorFilter('Semua');
     setSelectedMonth('Semua');
-    setSelectedYear(String(new Date().getFullYear()));
+    setSelectedYear('Semua');
     setDatePreset('all');
     setStartDate('');
     setEndDate('');
