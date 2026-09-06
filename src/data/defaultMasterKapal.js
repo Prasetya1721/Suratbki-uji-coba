@@ -200,6 +200,7 @@ export const MASTER_COMPANIES = [
   "PT. SINAR KARYA PASIFIK",
   "PT. SINAR KARYA SAMUDRA",
   "PT. SINAR KARYA SENTOSA",
+  "PT. SINAR LAUT KHATULISTIWA",
   "PT. SINAR MAS SUKSES",
   "PT. TRANS MAKMUR BERSAMA",
   "PT. TRIO NUSANTARA BAHARI",
@@ -219,6 +220,7 @@ export const MASTER_COMPANIES = [
   "SEGARA TRANSINDO MANDIRI",
   "SHANSUI KARYA UTAMA",
   "SHERIN KAPUAS RAYA, PT. (PELAYARAN)",
+  "SINAR LAUT KHATULISTIWA, PT.",
   "SINDO UTAMA JAYA",
   "TANJUNG BAHARI PERKASA, PT.",
   "TANJUNG CEMERLANG SHIPPING",
@@ -231,6 +233,135 @@ export const MASTER_COMPANIES = [
   "WIRA ARIANDI UTAMA",
   "ZHOUSHAN ZHONGLING PROPELLER"
 ];
+
+export const DEFAULT_COMPANY_DIRECTORY = {
+  "PT. SINAR LAUT KHATULISTIWA": {
+    namaPerusahaan: "PT. SINAR LAUT KHATULISTIWA",
+    alamat: "JL. BUDI KARYA NO. C.8 – C.20",
+    telepon: "0561-577211",
+    kota: "PONTIANAK"
+  },
+  "SINAR LAUT KHATULISTIWA, PT.": {
+    namaPerusahaan: "SINAR LAUT KHATULISTIWA, PT.",
+    alamat: "JL. BUDI KARYA NO. C.8 – C.20",
+    telepon: "0561-577211",
+    kota: "PONTIANAK"
+  },
+  "SINAR LAUT KHATULISTIWA": {
+    namaPerusahaan: "SINAR LAUT KHATULISTIWA",
+    alamat: "JL. BUDI KARYA NO. C.8 – C.20",
+    telepon: "0561-577211",
+    kota: "PONTIANAK"
+  },
+  "GEMILANG ASIA SEJAHTERA, PT.": {
+    namaPerusahaan: "GEMILANG ASIA SEJAHTERA, PT.",
+    alamat: "JL. IMAM BONJOL NO. 88",
+    telepon: "0561-734567",
+    kota: "PONTIANAK"
+  },
+  "GEMILANG ASIA SEJAHTERA": {
+    namaPerusahaan: "GEMILANG ASIA SEJAHTERA",
+    alamat: "JL. IMAM BONJOL NO. 88",
+    telepon: "0561-734567",
+    kota: "PONTIANAK"
+  },
+  "PT. PELAYARAN ARI DUTA BAHARI": {
+    namaPerusahaan: "PT. PELAYARAN ARI DUTA BAHARI",
+    alamat: "JL. KOM. YOS SUDARSO NO. 12",
+    telepon: "0561-765432",
+    kota: "PONTIANAK"
+  },
+  "PELAYARAN ARI DUTA BAHARI": {
+    namaPerusahaan: "PELAYARAN ARI DUTA BAHARI",
+    alamat: "JL. KOM. YOS SUDARSO NO. 12",
+    telepon: "0561-765432",
+    kota: "PONTIANAK"
+  },
+  "KAPUAS JATRATAMA, PT.": {
+    namaPerusahaan: "KAPUAS JATRATAMA, PT.",
+    alamat: "JL. VETERAN NO. 45",
+    telepon: "0561-748901",
+    kota: "PONTIANAK"
+  },
+  "PELAYARAN KAPUAS JATRATAMA": {
+    namaPerusahaan: "PELAYARAN KAPUAS JATRATAMA",
+    alamat: "JL. VETERAN NO. 45",
+    telepon: "0561-748901",
+    kota: "PONTIANAK"
+  },
+  "ASDP INDONESIA FERRY (PERSERO)": {
+    namaPerusahaan: "ASDP INDONESIA FERRY (PERSERO)",
+    alamat: "JL. RAHADI USMAN NO. 1",
+    telepon: "0561-732014",
+    kota: "PONTIANAK"
+  },
+  "PELAYARAN BAHARIMAS KALIMANTAN, PT.": {
+    namaPerusahaan: "PELAYARAN BAHARIMAS KALIMANTAN, PT.",
+    alamat: "JL. PAK KASIH NO. 18",
+    telepon: "0561-738910",
+    kota: "PONTIANAK"
+  },
+  "PELAYARAN BAHARIMAS KALIMANTAN": {
+    namaPerusahaan: "PELAYARAN BAHARIMAS KALIMANTAN",
+    alamat: "JL. PAK KASIH NO. 18",
+    telepon: "0561-738910",
+    kota: "PONTIANAK"
+  },
+  "KARYA PACIFIC SHIPPING": {
+    namaPerusahaan: "KARYA PACIFIC SHIPPING",
+    alamat: "JL. GAJAH MADA NO. 150",
+    telepon: "0561-739120",
+    kota: "PONTIANAK"
+  },
+  "PELAYARAN NELLY DWI PUTRI TBK": {
+    namaPerusahaan: "PELAYARAN NELLY DWI PUTRI TBK",
+    alamat: "JL. ARTERI SUPADIO KM 12",
+    telepon: "0561-671234",
+    kota: "PONTIANAK"
+  },
+  "PELAYARAN LINTAS KHATULISTIWA, PT": {
+    namaPerusahaan: "PELAYARAN LINTAS KHATULISTIWA, PT",
+    alamat: "JL. TANJUNGPURA NO. 210",
+    telepon: "0561-731189",
+    kota: "PONTIANAK"
+  },
+  "PELAYARAN LINTAS KHATULISTIWA": {
+    namaPerusahaan: "PELAYARAN LINTAS KHATULISTIWA",
+    alamat: "JL. TANJUNGPURA NO. 210",
+    telepon: "0561-731189",
+    kota: "PONTIANAK"
+  },
+  "PELAYARAN SAHABAT KAPUAS, PT": {
+    namaPerusahaan: "PELAYARAN SAHABAT KAPUAS, PT",
+    alamat: "JL. KHATULISTIWA NO. 78",
+    telepon: "0561-883456",
+    kota: "PONTIANAK"
+  },
+  "PT BARUNA MITRA SEGARA LINES": {
+    namaPerusahaan: "PT BARUNA MITRA SEGARA LINES",
+    alamat: "JL. GUSTI SITUT MAHMUD NO. 102",
+    telepon: "0561-881234",
+    kota: "PONTIANAK"
+  },
+  "PT DAYA MITRA BORNEO": {
+    namaPerusahaan: "PT DAYA MITRA BORNEO",
+    alamat: "JL. SULTAN SYAHRIR NO. 32",
+    telepon: "0561-745678",
+    kota: "PONTIANAK"
+  },
+  "PT MARITIM KENCANA MANDIRI": {
+    namaPerusahaan: "PT MARITIM KENCANA MANDIRI",
+    alamat: "JL. TEUKU UMAR NO. 55",
+    telepon: "0561-736789",
+    kota: "PONTIANAK"
+  },
+  "BUANA TRANSPERINDO WAHANA INTERNASIONAL": {
+    namaPerusahaan: "BUANA TRANSPERINDO WAHANA INTERNASIONAL",
+    alamat: "JL. PERDANA NO. 88 B",
+    telepon: "0561-571290",
+    kota: "PONTIANAK"
+  }
+};
 
 export const DEFAULT_MASTER_KAPAL = [
   {

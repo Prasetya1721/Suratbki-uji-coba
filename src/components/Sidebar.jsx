@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, FileCheck, BarChart2, Users, Settings, LogOut, Compass, ChevronDown, ChevronUp, Anchor } from 'lucide-react';
+import { LayoutDashboard, FileCheck, BarChart2, Users, Settings, LogOut, Compass, ChevronDown, ChevronUp, Anchor, Receipt } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { filterDataByRole } from '../utils/filterData';
 import { BKILogo } from './BKILogo';
 
 export const Sidebar = ({ activeTab, setActiveTab, isMobileMenuOpen, setIsMobileMenuOpen }) => {
-  const { suratTugas, kwitansiHonor, laporanSurvei, tariffs, visitSurvei = [] } = useData();
+  const { suratTugas, kwitansiHonor, laporanSurvei, tariffs, visitSurvei = [], notaDebit = [] } = useData();
   const { currentUser, role, usersList, logout } = useAuth();
   
   const [expandedMenus, setExpandedMenus] = useState({ surat: true, laporan: true });
@@ -134,6 +134,17 @@ export const Sidebar = ({ activeTab, setActiveTab, isMobileMenuOpen, setIsMobile
   }
 
   // Restricted Access: Admin, Developer, and Finance (Keuangan)
+  // Restricted Access for Nota Debit: Finance, Keuangan, Admin, Developer
+  if (role === 'finance' || role === 'keuangan' || role === 'admin' || role === 'developer') {
+    menuItems.push({
+      id: 'nota_debit',
+      label: 'Nota Debit',
+      icon: Receipt,
+      badge: notaDebit ? notaDebit.length : null,
+      badgeColor: '#0369a1'
+    });
+  }
+
   if (role === 'admin' || role === 'developer' || role === 'keuangan') {
     menuItems.push({
       id: 'tariffs',

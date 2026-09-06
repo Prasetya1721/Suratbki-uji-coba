@@ -19,6 +19,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { TvDisplay } from './components/TvDisplay';
 import { ShipDatabaseManagementTable } from './components/ShipDatabaseManagementTable';
 import { VisitSurveiTable } from './components/VisitSurveiTable';
+import { NotaDebitTable } from './components/NotaDebitTable';
 
 function AppContent() {
   const { isAuthenticated, role, logout, usersList } = useAuth();
@@ -121,6 +122,7 @@ function AppContent() {
           {(activeTab === 'laporan' || activeTab === 'laporan_pds') && <LaporanTable />}
           {activeTab === 'laporan_paraf' && <LaporanParafTable />}
           {activeTab === 'buku_agenda' && <BukuAgendaTable />}
+          {activeTab === 'nota_debit' && <NotaDebitTable />}
           {activeTab === 'tariffs' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               <GradeTariffManagementTable />

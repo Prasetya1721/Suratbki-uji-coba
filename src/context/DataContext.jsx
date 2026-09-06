@@ -5,7 +5,8 @@ import {
   INITIAL_LAPORAN_SURVEI
 } from '../utils/initialData';
 import { INITIAL_LOCATION_TARIFFS, INITIAL_GRADE_TARIFFS } from '../utils/tariffData';
-import { DEFAULT_MASTER_KAPAL, mergeWithDefaultMasterKapal } from '../data/defaultMasterKapal';
+import { DEFAULT_MASTER_KAPAL, mergeWithDefaultMasterKapal, DEFAULT_COMPANY_DIRECTORY } from '../data/defaultMasterKapal';
+import { determineKategoriBisnis } from '../data/prosesBisnisConstants';
 import { cleanDocNumber } from '../utils/formatters';
 import { isSameSurveyor } from '../utils/filterData';
 import {
@@ -148,6 +149,22 @@ export const DataProvider = ({ children }) => {
     return DEFAULT_MASTER_KAPAL;
   });
 
+  // ====== MASTER ALAMAT PERUSAHAAN ======
+  const [companyDirectory, setCompanyDirectory] = useState(() => {
+    const saved = localStorage.getItem('st_company_directory');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return { ...DEFAULT_COMPANY_DIRECTORY, ...parsed };
+      } catch (e) {}
+    }
+    return DEFAULT_COMPANY_DIRECTORY;
+  });
+
+  useEffect(() => {
+    safeSetLocalStorage('st_company_directory', companyDirectory);
+  }, [companyDirectory]);
+
   const [adminSettings, setAdminSettings] = useState(() => {
     const saved = localStorage.getItem('st_admin_settings');
     const parsed = saved ? JSON.parse(saved) : {};
@@ -177,6 +194,21 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     safeSetLocalStorage('st_visit_survei', visitSurvei);
   }, [visitSurvei]);
+
+  const [notaDebit, setNotaDebit] = useState(() => {
+    const saved = localStorage.getItem('st_nota_debit');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {}
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    safeSetLocalStorage('st_nota_debit', notaDebit);
+  }, [notaDebit]);
 
   // Sinkronisasi otomatis dokumen jika nama pengguna/surveyor diubah
   useEffect(() => {
@@ -509,9 +541,13 @@ export const DataProvider = ({ children }) => {
       namaKapal:   (data.namaKapal   || '').trim().toUpperCase(),
       noAgenda:    noAgenda,
       pemohon:     (data.pemohon     || '').trim(),
+      alamatPerusahaan: (data.alamatPerusahaan || '').trim(),
       jenisSurvey: (data.jenisSurvey || '').trim(),
       createdAt: new Date().toISOString()
     };
+    if (newKapal.pemohon && newKapal.alamatPerusahaan) {
+      saveCompanyAddress(newKapal.pemohon, { alamat: newKapal.alamatPerusahaan });
+    }
     setMasterKapal((prev) => [...prev, newKapal]);
     saveMasterKapalToCloud(newKapal);
     return { success: true, data: newKapal };
@@ -536,8 +572,12 @@ export const DataProvider = ({ children }) => {
             namaKapal:   (updatedData.namaKapal   || item.namaKapal).trim().toUpperCase(),
             noAgenda:    (updatedData.noAgenda    !== undefined ? updatedData.noAgenda : item.noAgenda).trim(),
             pemohon:     (updatedData.pemohon     !== undefined ? updatedData.pemohon : (item.pemohon || '')).trim(),
+            alamatPerusahaan: (updatedData.alamatPerusahaan !== undefined ? updatedData.alamatPerusahaan : (item.alamatPerusahaan || '')).trim(),
             jenisSurvey: (updatedData.jenisSurvey !== undefined ? updatedData.jenisSurvey : (item.jenisSurvey || '')).trim()
           };
+          if (updated.pemohon && updated.alamatPerusahaan) {
+            saveCompanyAddress(updated.pemohon, { alamat: updated.alamatPerusahaan });
+          }
           saveMasterKapalToCloud(updated);
           return updated;
         }
@@ -545,6 +585,60 @@ export const DataProvider = ({ children }) => {
       })
     );
     return { success: true };
+  };
+
+  // ====== CRUD ALAMAT & KONTAK PERUSAHAAN ======
+  const saveCompanyAddress = (companyName, addressData = {}) => {
+    if (!companyName || !companyName.trim()) return;
+    const cleanKey = companyName.trim().toUpperCase();
+    setCompanyDirectory((prev) => {
+      const existing = prev[cleanKey] || {};
+      const updated = {
+        ...prev,
+        [cleanKey]: {
+          ...existing,
+          ...addressData,
+          namaPerusahaan: cleanKey,
+          alamat: (addressData.alamat !== undefined ? addressData.alamat : existing.alamat || '').trim(),
+          telepon: (addressData.telepon !== undefined ? addressData.telepon : existing.telepon || '').trim(),
+          kota: (addressData.kota !== undefined ? addressData.kota : existing.kota || 'PONTIANAK').trim().toUpperCase(),
+          updatedAt: new Date().toISOString(),
+        }
+      };
+      safeSetLocalStorage('st_company_directory', updated);
+      return updated;
+    });
+  };
+
+  const getCompanyAddress = (companyName) => {
+    if (!companyName || !companyName.trim()) return null;
+    const cleanKey = companyName.trim().toUpperCase();
+
+    // Direct match
+    if (companyDirectory[cleanKey]) {
+      return companyDirectory[cleanKey];
+    }
+
+    // Lookup with/without PT. prefix
+    const cleanNoPt = cleanKey.replace(/^PT\.?\s*/i, '').replace(/,?\s*PT\.?$/i, '').trim();
+    for (const [k, val] of Object.entries(companyDirectory)) {
+      const kNoPt = k.replace(/^PT\.?\s*/i, '').replace(/,?\s*PT\.?$/i, '').trim();
+      if (k === cleanKey || kNoPt === cleanNoPt || k.includes(cleanNoPt) || cleanKey.includes(kNoPt)) {
+        return val;
+      }
+    }
+    return null;
+  };
+
+  const deleteCompanyAddress = (companyName) => {
+    if (!companyName || !companyName.trim()) return;
+    const cleanKey = companyName.trim().toUpperCase();
+    setCompanyDirectory((prev) => {
+      const next = { ...prev };
+      delete next[cleanKey];
+      safeSetLocalStorage('st_company_directory', next);
+      return next;
+    });
   };
 
   // Bulk import — skips duplicates and returns summary
@@ -766,6 +860,63 @@ export const DataProvider = ({ children }) => {
       return updated;
     });
     deleteVisitSurveiFromCloud(id);
+  };
+
+  // ====== NOTA DEBIT CRUD ======
+  const addNotaDebit = (data) => {
+    const newItem = {
+      id: `nd-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      createdAt: new Date().toISOString(),
+      noSeriFormND: (data.noSeriFormND || '').trim(),
+      noBilling: (data.noBilling || '').trim(),
+      tanggalND: data.tanggalND || new Date().toISOString().split('T')[0],
+      nomorInvoice: (data.nomorInvoice || '').trim(),
+      namaObyekProduksi: (data.namaObyekProduksi || '').trim().toUpperCase(),
+      nomorAgendaPermohonan: (data.nomorAgendaPermohonan || '').trim(),
+      nomorLaporanSurvey: (data.nomorLaporanSurvey || '').trim(),
+      namaSurveyor: (data.namaSurveyor || '').trim(),
+      penggunaJasa: (data.penggunaJasa || '').trim().toUpperCase(),
+      jenisSurvey: data.jenisSurvey || 'FKOB',
+      kategoriBisnis: data.kategoriBisnis || determineKategoriBisnis(data.jenisSurvey || ''),
+      feeSurvey: Number(data.feeSurvey) || 0,
+      biayaSurvey: Number(data.biayaSurvey) || 0,
+      biayaSebelumPPN: Number(data.biayaSebelumPPN) || 0,
+      ppnAmount: Number(data.ppnAmount) || 0,
+      totalSetelahPPN: Number(data.totalSetelahPPN) || 0,
+      tandaTanganPenerima: (data.tandaTanganPenerima || '').trim(),
+      keterangan: (data.keterangan || '').trim(),
+    };
+    setNotaDebit((prev) => [newItem, ...prev]);
+    return newItem;
+  };
+
+  const updateNotaDebit = (id, updatedData) => {
+    setNotaDebit((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              ...updatedData,
+              namaObyekProduksi: (updatedData.namaObyekProduksi || item.namaObyekProduksi || '').toUpperCase(),
+              penggunaJasa: (updatedData.penggunaJasa || item.penggunaJasa || '').toUpperCase(),
+              kategoriBisnis: updatedData.kategoriBisnis || item.kategoriBisnis || determineKategoriBisnis(updatedData.jenisSurvey || item.jenisSurvey || ''),
+              feeSurvey: Number(updatedData.feeSurvey ?? item.feeSurvey) || 0,
+              biayaSurvey: Number(updatedData.biayaSurvey ?? item.biayaSurvey) || 0,
+              biayaSebelumPPN: Number(updatedData.biayaSebelumPPN ?? item.biayaSebelumPPN) || 0,
+              ppnAmount: Number(updatedData.ppnAmount ?? item.ppnAmount) || 0,
+              totalSetelahPPN: Number(updatedData.totalSetelahPPN ?? item.totalSetelahPPN) || 0,
+            }
+          : item
+      )
+    );
+  };
+
+  const deleteNotaDebit = (id) => {
+    setNotaDebit((prev) => {
+      const updated = prev.filter((item) => String(item.id) !== String(id));
+      safeSetLocalStorage('st_nota_debit', updated);
+      return updated;
+    });
   };
 
   // ====== 1. ADMIN INPUT SPS (Batch or Single Ship) ======
@@ -1515,11 +1666,19 @@ export const DataProvider = ({ children }) => {
         tariffs,
         gradeTariffs,
         masterKapal,
+        companyDirectory,
+        saveCompanyAddress,
+        getCompanyAddress,
+        deleteCompanyAddress,
         adminSettings,
         visitSurvei,
         addVisitSurvei,
         updateVisitSurvei,
         deleteVisitSurvei,
+        notaDebit,
+        addNotaDebit,
+        updateNotaDebit,
+        deleteNotaDebit,
         updateAdminSettings,
         addTariff,
         updateTariff,
