@@ -422,23 +422,6 @@ export const BiayaPdsLuarNegeriPrintModal = ({
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  fontSize: '0.78rem',
-                  padding: '0.32rem 0.6rem',
-                  background: '#f0f9ff',
-                  color: '#0369a1',
-                  border: '1px solid #bae6fd',
-                  borderRadius: '6px',
-                  fontWeight: 700
-                }}
-              >
-                <span>📐 A4 Landscape</span>
-              </div>
-
               <label
                 style={{
                   display: 'flex',
