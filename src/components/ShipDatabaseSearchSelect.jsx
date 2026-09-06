@@ -1,17 +1,34 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Search, ChevronDown, ChevronUp, X, Building2 } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, X, Building2, PlusCircle } from 'lucide-react';
 
 export default function ShipDatabaseSearchSelect({
   shipDatabase = [],
+  masterKapal,
+  value,
+  onChange,
   onSelect,
+  onSelectShip,
   placeholder = '-- 🚢 Ketik nama kapal, no. agenda, atau perusahaan pemohon... --',
   style = {},
-  disabled = false
+  disabled = false,
+  required = false
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const isControlled = value !== undefined;
+  const [internalTerm, setInternalTerm] = useState(isControlled ? (value || '') : '');
   const containerRef = useRef(null);
   const inputRef = useRef(null);
+
+  const rawDatabase = masterKapal || shipDatabase || [];
+
+  // Sync internal state when controlled value changes externally
+  useEffect(() => {
+    if (isControlled) {
+      setInternalTerm(value || '');
+    }
+  }, [value, isControlled]);
+
+  const currentTerm = isControlled ? (value || '') : internalTerm;
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -26,8 +43,8 @@ export default function ShipDatabaseSearchSelect({
 
   // Filter ships based on user search term
   const filteredShips = useMemo(() => {
-    const cleanTerm = String(searchTerm || '').trim().toUpperCase();
-    const safeDb = Array.isArray(shipDatabase) ? shipDatabase : [];
+    const cleanTerm = String(currentTerm || '').trim().toUpperCase();
+    const safeDb = Array.isArray(rawDatabase) ? rawDatabase : [];
     if (!cleanTerm) return safeDb;
     return safeDb.filter((s) => {
       if (!s) return false;
@@ -37,16 +54,42 @@ export default function ShipDatabaseSearchSelect({
       const pemohon = String(s.pemohon || '').toUpperCase();
       return name.includes(cleanTerm) || agenda.includes(cleanTerm) || order.includes(cleanTerm) || pemohon.includes(cleanTerm);
     });
-  }, [shipDatabase, searchTerm]);
+  }, [rawDatabase, currentTerm]);
 
   const handleItemClick = (ship) => {
     if (disabled || !ship) return;
+    const shipNameUpper = String(ship.namaKapal || '').trim().toUpperCase();
+    setInternalTerm(shipNameUpper);
+    if (onChange) {
+      onChange(shipNameUpper);
+    }
     if (onSelect) {
       onSelect(ship);
     }
-    setSearchTerm('');
+    if (onSelectShip) {
+      onSelectShip(ship);
+    }
     setIsOpen(false);
   };
+
+  const handleUseManualName = (customName) => {
+    const upper = String(customName || '').trim().toUpperCase();
+    if (!upper) return;
+    setInternalTerm(upper);
+    if (onChange) onChange(upper);
+    const mockShip = { namaKapal: upper, isManual: true };
+    if (onSelect) onSelect(mockShip);
+    if (onSelectShip) onSelectShip(mockShip);
+    setIsOpen(false);
+  };
+
+  const hasExactMatch = useMemo(() => {
+    const clean = String(currentTerm || '').trim().toUpperCase();
+    if (!clean) return false;
+    return (rawDatabase || []).some(
+      (s) => String(s.namaKapal || '').trim().toUpperCase() === clean
+    );
+  }, [rawDatabase, currentTerm]);
 
   return (
     <div
@@ -74,15 +117,18 @@ export default function ShipDatabaseSearchSelect({
         }}
       >
         <Search size={15} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-        
+
         <input
           ref={inputRef}
           type="text"
           disabled={disabled}
-          value={searchTerm}
+          required={required}
+          value={currentTerm}
           onChange={(e) => {
             if (disabled) return;
-            setSearchTerm(e.target.value);
+            const val = e.target.value;
+            setInternalTerm(val);
+            if (onChange) onChange(val);
             if (!isOpen) setIsOpen(true);
           }}
           onFocus={() => {
@@ -90,9 +136,13 @@ export default function ShipDatabaseSearchSelect({
           }}
           onKeyDown={(e) => {
             if (disabled) return;
-            if (e.key === 'Enter' && filteredShips.length > 0) {
-              e.preventDefault();
-              handleItemClick(filteredShips[0]);
+            if (e.key === 'Enter') {
+              if (filteredShips.length > 0 && !hasExactMatch) {
+                e.preventDefault();
+                handleItemClick(filteredShips[0]);
+              } else if (currentTerm) {
+                setIsOpen(false);
+              }
             }
             if (e.key === 'Escape') {
               setIsOpen(false);
@@ -106,16 +156,17 @@ export default function ShipDatabaseSearchSelect({
             width: '100%',
             fontSize: '0.84rem',
             color: 'var(--text-primary)',
-            fontWeight: 600,
+            fontWeight: 700,
             cursor: disabled ? 'not-allowed' : 'text'
           }}
         />
 
-        {!disabled && searchTerm && (
+        {!disabled && currentTerm && (
           <button
             type="button"
             onClick={() => {
-              setSearchTerm('');
+              setInternalTerm('');
+              if (onChange) onChange('');
               inputRef.current?.focus();
             }}
             style={{
@@ -127,7 +178,7 @@ export default function ShipDatabaseSearchSelect({
               display: 'flex',
               alignItems: 'center'
             }}
-            title="Hapus pencarian"
+            title="Hapus / ketik ulang"
           >
             <X size={14} />
           </button>
@@ -174,6 +225,42 @@ export default function ShipDatabaseSearchSelect({
             padding: '0.35rem 0'
           }}
         >
+          {/* Quick Option to use manual typed name if not an exact match */}
+          {currentTerm && !hasExactMatch && (
+            <div
+              onClick={() => handleUseManualName(currentTerm)}
+              style={{
+                padding: '0.55rem 0.75rem',
+                cursor: 'pointer',
+                background: 'rgba(16, 185, 129, 0.08)',
+                borderBottom: '1px solid rgba(16, 185, 129, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                color: '#059669',
+                fontSize: '0.8rem',
+                fontWeight: 700
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(16, 185, 129, 0.08)';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                <PlusCircle size={14} style={{ flexShrink: 0 }} />
+                <span style={{ whiteSpace: 'nowrap' }}>Gunakan Kapal Manual Baru:</span>
+                <strong style={{ textDecoration: 'underline', color: '#047857', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {currentTerm.trim().toUpperCase()}
+                </strong>
+              </div>
+              <span style={{ fontSize: '0.68rem', background: '#059669', color: '#ffffff', padding: '0.15rem 0.4rem', borderRadius: '4px', flexShrink: 0 }}>
+                Manual
+              </span>
+            </div>
+          )}
+
           {filteredShips.length > 0 ? (
             <div>
               <div
@@ -190,8 +277,8 @@ export default function ShipDatabaseSearchSelect({
                   alignItems: 'center'
                 }}
               >
-                <span>Daftar Kapal Database ({filteredShips.length > 100 ? `100 dari ${filteredShips.length}` : filteredShips.length})</span>
-                <span>Ketik / Klik untuk Pilih</span>
+                <span>Daftar Database ({filteredShips.length > 100 ? `100 dari ${filteredShips.length}` : filteredShips.length})</span>
+                <span>Klik untuk Memilih</span>
               </div>
               {filteredShips.slice(0, 100).map((ship, idx) => (
                 <div
@@ -221,7 +308,7 @@ export default function ShipDatabaseSearchSelect({
                       <div style={{ fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {ship.namaKapal}
                       </div>
-                      {ship.pemohon && (
+                      {ship.pemohon && ship.pemohon !== '-' && (
                         <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           <Building2 size={12} color="var(--accent-primary)" style={{ flexShrink: 0 }} />
                           <span>{ship.pemohon}</span>
@@ -231,32 +318,41 @@ export default function ShipDatabaseSearchSelect({
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
-                    <span
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        background: 'rgba(2, 132, 199, 0.12)',
-                        color: 'var(--accent-primary)',
-                        padding: '0.15rem 0.45rem',
-                        borderRadius: '4px'
-                      }}
-                    >
-                      Agenda: {ship.noAgenda || '-'}
-                    </span>
+                    {ship.noAgenda && (
+                      <span
+                        style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          background: 'rgba(2, 132, 199, 0.12)',
+                          color: 'var(--accent-primary)',
+                          padding: '0.15rem 0.45rem',
+                          borderRadius: '4px'
+                        }}
+                      >
+                        Agenda: {ship.noAgenda}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
             <div style={{ padding: '0.85rem 1rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              {searchTerm ? (
-                <>
-                  Tidak ditemukan kapal dengan kata kunci "<strong>{searchTerm}</strong>".
-                  <br />
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'inline-block' }}>
-                    Kapal baru dapat didaftarkan melalui form <strong>SPS</strong> atau menu <strong>Database Kapal</strong>.
-                  </span>
-                </>
+              {currentTerm ? (
+                <div>
+                  <div>Kapal "<strong>{currentTerm}</strong>" belum terdaftar di database.</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                    Kapal ini dapat langsung digunakan dan otomatis disimpan ke database saat formulir disimpan.
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    style={{ marginTop: '0.5rem', fontSize: '0.75rem', padding: '0.25rem 0.65rem' }}
+                    onClick={() => handleUseManualName(currentTerm)}
+                  >
+                    Gunakan "{currentTerm.trim().toUpperCase()}"
+                  </button>
+                </div>
               ) : (
                 'Belum ada riwayat kapal terdaftar di database.'
               )}

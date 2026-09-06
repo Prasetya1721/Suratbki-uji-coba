@@ -12,8 +12,6 @@ import {
   determineKategoriBisnis
 } from '../data/prosesBisnisConstants';
 
-const PPN_RATE = 0.11;
-
 // 1. Form & Kode Nota Debit BKI
 export const BKI_FORM_SURVEY_TYPES = [
   'FKOB',
@@ -70,13 +68,14 @@ const EMPTY_FORM = {
   kategoriBisnis: 'SURVEY PERIODIK',
   feeSurvey: 0,
   biayaSurvey: 0,
+  ppnRate: 11,
   tandaTanganPenerima: '',
   keterangan: 'Belum Dicetak',
 };
 
 export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, isEdit = false }) => {
   const { usersList } = useAuth();
-  const { masterKapal = [], suratTugas = [], laporanSurvei = [], notaDebit = [] } = useData();
+  const { masterKapal = [], suratTugas = [], laporanSurvei = [], notaDebit = [], adminSettings } = useData();
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [isCustomSurvey, setIsCustomSurvey] = useState(false);
@@ -187,9 +186,12 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
     [usersList]
   );
 
+  const globalPpnRate = adminSettings?.ppnRate !== undefined ? Number(adminSettings.ppnRate) : 11;
+  const activePpnRate = form.ppnRate !== undefined && form.ppnRate !== '' ? Number(form.ppnRate) : globalPpnRate;
+
   // Kalkulasi otomatis biaya
   const biayaSebelumPPN = (Number(form.feeSurvey) || 0) + (Number(form.biayaSurvey) || 0);
-  const ppnAmount = Math.round(biayaSebelumPPN * PPN_RATE);
+  const ppnAmount = Math.round(biayaSebelumPPN * (activePpnRate / 100));
   const totalSetelahPPN = biayaSebelumPPN + ppnAmount;
 
   const getTodayStr = () => {
@@ -203,6 +205,7 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
         setForm({
           ...EMPTY_FORM,
           ...initialData,
+          ppnRate: initialData.ppnRate !== undefined ? initialData.ppnRate : globalPpnRate,
           kategoriBisnis: initialData.kategoriBisnis || determineKategoriBisnis(initialData.jenisSurvey || ''),
         });
         const allKnown = [
@@ -223,11 +226,12 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
           namaSurveyor: surveyorOptions[0]?.name || '',
           jenisSurvey: defaultSurvey,
           kategoriBisnis: determineKategoriBisnis(defaultSurvey),
+          ppnRate: globalPpnRate,
         });
         setIsCustomSurvey(false);
       }
     }
-  }, [isOpen, initialData, surveyorOptions]);
+  }, [isOpen, initialData, surveyorOptions, globalPpnRate]);
 
   if (!isOpen) return null;
 
@@ -267,6 +271,7 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
       feeSurvey: Number(form.feeSurvey) || 0,
       biayaSurvey: Number(form.biayaSurvey) || 0,
       biayaSebelumPPN,
+      ppnRate: activePpnRate,
       ppnAmount,
       totalSetelahPPN,
     });
@@ -781,10 +786,10 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
 
               {/* Kalkulasi otomatis */}
               <div style={computedRowStyle}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '0.75rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '0.75rem', alignItems: 'center' }}>
                   {[
                     { label: 'Biaya Sebelum PPN', value: biayaSebelumPPN, color: '#374151' },
-                    { label: 'PPN 11%', value: ppnAmount, color: '#d97706' },
+                    { label: `PPN ${activePpnRate}%`, value: ppnAmount, color: '#d97706' },
                     { label: 'Total Setelah PPN', value: totalSetelahPPN, color: '#059669', bold: true },
                   ].map((row) => (
                     <div key={row.label} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
@@ -806,9 +811,31 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
                       </span>
                     </div>
                   ))}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', justifyContent: 'center', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>PPN Rate</span>
-                    <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#d97706' }}>11%</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', justifyContent: 'center', alignItems: 'center', background: '#f8fafc', padding: '0.35rem 0.5rem', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Tarif PPN (%)</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        style={{
+                          width: '55px',
+                          textAlign: 'center',
+                          fontWeight: 900,
+                          fontSize: '0.95rem',
+                          color: '#d97706',
+                          padding: '0.15rem 0.2rem',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          background: '#ffffff'
+                        }}
+                        value={form.ppnRate !== undefined ? form.ppnRate : globalPpnRate}
+                        onChange={(e) => handleChange('ppnRate', e.target.value)}
+                        title="Dapat diedit sesuai kebutuhan transaksi atau mengikuti standar Manajemen Tarif"
+                      />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#d97706' }}>%</span>
+                    </div>
                   </div>
                 </div>
               </div>

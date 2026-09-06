@@ -176,6 +176,7 @@ export const DataProvider = ({ children }) => {
       kacabSignatureUrl: '/signatures/kacab_muhson_signature.png',
       pembuatSignatureUrl: '/signatures/pembuat_renza_signature.png',
       tatLuarKota: 750000,
+      ppnRate: 11,
       ...parsed
     };
   });
@@ -768,6 +769,11 @@ export const DataProvider = ({ children }) => {
         const cleanName = targetShip.namaKapal;
         if (!cleanName) return;
 
+        const cleanPemohon = (targetShip.pemohon || '').trim().toUpperCase();
+        if (cleanPemohon && cleanPemohon !== '-' && cleanPemohon !== 'PERUSAHAAN') {
+          saveCompanyAddress(cleanPemohon);
+        }
+
         const existingIndex = updatedList.findIndex(
           (k) => (k.namaKapal || '').trim().toUpperCase() === cleanName
         );
@@ -881,6 +887,7 @@ export const DataProvider = ({ children }) => {
       feeSurvey: Number(data.feeSurvey) || 0,
       biayaSurvey: Number(data.biayaSurvey) || 0,
       biayaSebelumPPN: Number(data.biayaSebelumPPN) || 0,
+      ppnRate: Number(data.ppnRate !== undefined ? data.ppnRate : (adminSettings?.ppnRate ?? 11)),
       ppnAmount: Number(data.ppnAmount) || 0,
       totalSetelahPPN: Number(data.totalSetelahPPN) || 0,
       tandaTanganPenerima: (data.tandaTanganPenerima || '').trim(),
@@ -903,6 +910,7 @@ export const DataProvider = ({ children }) => {
               feeSurvey: Number(updatedData.feeSurvey ?? item.feeSurvey) || 0,
               biayaSurvey: Number(updatedData.biayaSurvey ?? item.biayaSurvey) || 0,
               biayaSebelumPPN: Number(updatedData.biayaSebelumPPN ?? item.biayaSebelumPPN) || 0,
+              ppnRate: Number(updatedData.ppnRate !== undefined ? updatedData.ppnRate : (item.ppnRate ?? adminSettings?.ppnRate ?? 11)),
               ppnAmount: Number(updatedData.ppnAmount ?? item.ppnAmount) || 0,
               totalSetelahPPN: Number(updatedData.totalSetelahPPN ?? item.totalSetelahPPN) || 0,
             }
@@ -1005,6 +1013,12 @@ export const DataProvider = ({ children }) => {
         });
       }
     });
+
+    // Auto-sync company pemohon ke companyDirectory
+    const cleanedPemohon = (cleaned.pemohon || '').trim().toUpperCase();
+    if (cleanedPemohon && cleanedPemohon !== '-' && cleanedPemohon !== 'PERUSAHAAN') {
+      saveCompanyAddress(cleanedPemohon);
+    }
 
     setSuratTugas((prev) => {
       const next = [...createdSpsItems, ...prev];

@@ -39,9 +39,16 @@ export const DataControlNotaDebitPrintModal = ({
 
   const todayFormatted = formatDateIndo(new Date().toISOString().split('T')[0]);
 
+  const defaultPpnRate = adminSettings?.ppnRate !== undefined ? Number(adminSettings.ppnRate) : 11;
+
   // Hitung total akumulasi
   const totalBiayaSebelumPPN = data.reduce((s, i) => s + (Number(i.feeSurvey) || 0) + (Number(i.biayaSurvey) || 0), 0);
-  const totalPPN = Math.round(totalBiayaSebelumPPN * 0.11);
+  const totalPPN = data.reduce((s, i) => {
+    if (i.ppnAmount !== undefined && i.ppnAmount !== null) return s + Number(i.ppnAmount);
+    const sub = (Number(i.feeSurvey) || 0) + (Number(i.biayaSurvey) || 0);
+    const rate = i.ppnRate !== undefined ? Number(i.ppnRate) : defaultPpnRate;
+    return s + Math.round(sub * (rate / 100));
+  }, 0);
   const totalSetelahPPN = totalBiayaSebelumPPN + totalPPN;
 
   const handlePrint = () => {
@@ -241,9 +248,10 @@ export const DataControlNotaDebitPrintModal = ({
                     </tr>
                   ) : (
                     data.map((item, idx) => {
+                      const itemPpnRate = item.ppnRate !== undefined ? Number(item.ppnRate) : defaultPpnRate;
                       const biayaSebelumPPN = (Number(item.feeSurvey) || 0) + (Number(item.biayaSurvey) || 0);
-                      const ppnAmount = Math.round(biayaSebelumPPN * 0.11);
-                      const totalSetelahPPN = biayaSebelumPPN + ppnAmount;
+                      const ppnAmount = item.ppnAmount !== undefined ? Number(item.ppnAmount) : Math.round(biayaSebelumPPN * (itemPpnRate / 100));
+                      const totalSetelahPPN = item.totalSetelahPPN !== undefined ? Number(item.totalSetelahPPN) : (biayaSebelumPPN + ppnAmount);
                       const kat = item.kategoriBisnis || determineKategoriBisnis(item.jenisSurvey || '');
                       const meta = PROSES_BISNIS_META[kat] || { bg: '#f8fafc', textColor: '#0f172a', name: kat };
 
@@ -251,7 +259,7 @@ export const DataControlNotaDebitPrintModal = ({
                         { label: 'Fee Survey', value: Number(item.feeSurvey) || 0 },
                         { label: 'Biaya Survey', value: Number(item.biayaSurvey) || 0 },
                         { label: 'Biaya Sblm PPN', value: biayaSebelumPPN },
-                        { label: 'PPN 11%', value: ppnAmount, italic: true },
+                        { label: `PPN ${itemPpnRate}%`, value: ppnAmount, italic: true },
                         { label: 'Total Stlh PPN', value: totalSetelahPPN, bold: true, bg: '#f1f5f9' },
                       ];
 

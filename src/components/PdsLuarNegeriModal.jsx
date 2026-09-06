@@ -5,7 +5,9 @@ import {
   Globe,
   DollarSign,
   Calendar,
-  Lock
+  Lock,
+  Building2,
+  Ship
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useData } from '../context/DataContext';
@@ -16,12 +18,40 @@ import { sanitizeFormData } from '../utils/security';
 import { countHolidaysAndWeekendsInRange } from '../utils/holidays';
 import { findSurveyorUser } from '../utils/filterData';
 import ShipDatabaseSearchSelect from './ShipDatabaseSearchSelect';
+import { MASTER_COMPANIES } from '../data/defaultMasterKapal';
 
 export const PdsLuarNegeriModal = ({ isOpen, onClose, editItem = null }) => {
-  const { createPdsFromSurvey, updateSuratTugas, adminSettings, masterKapal } = useData();
+  const {
+    createPdsFromSurvey,
+    updateSuratTugas,
+    adminSettings,
+    masterKapal,
+    addMasterKapal,
+    updateMasterKapal,
+    companyDirectory,
+    saveCompanyAddress,
+    getCompanyAddress
+  } = useData();
   const { usersList, currentUser, role } = useAuth();
 
   const isLocked = Boolean(editItem && isDocumentLocked(editItem, 3) && !editItem.isUnlockedByAdmin);
+
+  const companyOptions = useMemo(() => {
+    const set = new Set();
+    (MASTER_COMPANIES || []).forEach((c) => {
+      const trimmed = String(c || '').trim().toUpperCase();
+      if (trimmed && trimmed !== '-') set.add(trimmed);
+    });
+    Object.keys(companyDirectory || {}).forEach((c) => {
+      const trimmed = String(c || '').trim().toUpperCase();
+      if (trimmed) set.add(trimmed);
+    });
+    (masterKapal || []).forEach((k) => {
+      const trimmed = String(k.pemohon || '').trim().toUpperCase();
+      if (trimmed && trimmed !== '-') set.add(trimmed);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [companyDirectory, masterKapal]);
 
   const surveyorUsers = useMemo(
     () => (usersList || []).filter((u) => u.role === 'surveyor' || u.role === 'kacab'),
@@ -257,11 +287,13 @@ export const PdsLuarNegeriModal = ({ isOpen, onClose, editItem = null }) => {
   const handleSelectShipFromDatabase = (foundShip) => {
     if (!foundShip) return;
     const shipNameUpper = String(foundShip.namaKapal || '').trim().toUpperCase();
+    const shipPemohonUpper = (foundShip.pemohon && foundShip.pemohon !== '-') ? String(foundShip.pemohon).trim().toUpperCase() : '';
     setFormData((prev) => ({
       ...prev,
       namaKapal: shipNameUpper,
       noAgenda: foundShip.noAgenda || prev.noAgenda,
-      noOrder: foundShip.noOrder || prev.noOrder
+      noOrder: foundShip.noOrder || prev.noOrder,
+      pemohon: shipPemohonUpper || prev.pemohon
     }));
   };
 
@@ -288,8 +320,52 @@ export const PdsLuarNegeriModal = ({ isOpen, onClose, editItem = null }) => {
       return;
     }
 
+    const cleanShipName = (formData.namaKapal || '').trim().toUpperCase();
+    const cleanPemohon = (formData.pemohon || '').trim().toUpperCase();
+
+    // 1. Simpan kapal baru ke masterKapal database jika belum terdaftar
+    if (cleanShipName && cleanShipName !== '-' && cleanShipName !== 'KAPAL') {
+      const existingShip = (masterKapal || []).find(
+        (k) => (k.namaKapal || '').trim().toUpperCase() === cleanShipName
+      );
+      if (!existingShip) {
+        if (addMasterKapal) {
+          addMasterKapal({
+            namaKapal: cleanShipName,
+            noAgenda: formData.noAgenda || '',
+            pemohon: cleanPemohon || '',
+            jenisSurvey: 'SURVEY LUAR NEGERI'
+          });
+          toast.success(`Kapal "${cleanShipName}" berhasil disimpan otomatis ke database!`, { duration: 3000 });
+        }
+      } else if (cleanPemohon && (!existingShip.pemohon || existingShip.pemohon === '-')) {
+        if (updateMasterKapal) {
+          updateMasterKapal(existingShip.id, {
+            ...existingShip,
+            pemohon: cleanPemohon,
+            noAgenda: existingShip.noAgenda || formData.noAgenda || ''
+          });
+        }
+      }
+    }
+
+    // 2. Simpan pemohon (perusahaan) ke database/direktori jika belum ada
+    if (cleanPemohon && cleanPemohon !== '-' && cleanPemohon !== 'PERUSAHAAN') {
+      const existingCompany = getCompanyAddress ? getCompanyAddress(cleanPemohon) : null;
+      if (!existingCompany && saveCompanyAddress) {
+        saveCompanyAddress(cleanPemohon, {
+          namaPerusahaan: cleanPemohon,
+          alamat: '',
+          kota: 'PONTIANAK'
+        });
+        toast.success(`Perusahaan pemohon "${cleanPemohon}" tersimpan di database!`, { duration: 3000 });
+      }
+    }
+
     const payload = sanitizeFormData({
       ...formData,
+      namaKapal: cleanShipName,
+      pemohon: cleanPemohon,
       docType: 'PDS',
       isPds: true,
       pdsType: 'luar_negeri',
@@ -324,9 +400,10 @@ export const PdsLuarNegeriModal = ({ isOpen, onClose, editItem = null }) => {
       // Default shipsDetail for table compatibility
       shipsDetail: [
         {
-          namaKapal: formData.namaKapal.toUpperCase(),
+          namaKapal: cleanShipName,
           noAgenda: formData.noAgenda || '-',
           noOrder: formData.noOrder || '-',
+          pemohon: cleanPemohon || '-',
           biayaSurvei: calcs.grandTotalIdr
         }
       ]
@@ -499,8 +576,9 @@ export const PdsLuarNegeriModal = ({ isOpen, onClose, editItem = null }) => {
                 {/* SECTION 2: KAPAL, NO AGENDA, PEMOHON */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label" style={{ fontWeight: 700 }}>
-                      Nama Kapal *
+                    <label className="form-label" style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Ship size={14} color="#0284c7" />
+                      <span>Nama Kapal *</span>
                     </label>
                     <ShipDatabaseSearchSelect
                       masterKapal={masterKapal}
@@ -508,7 +586,11 @@ export const PdsLuarNegeriModal = ({ isOpen, onClose, editItem = null }) => {
                       onChange={(val) => setFormData({ ...formData, namaKapal: val.toUpperCase() })}
                       onSelectShip={handleSelectShipFromDatabase}
                       placeholder="Contoh: LCT SHUN JUN 7"
+                      disabled={isLocked}
                     />
+                    <span style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.25rem', display: 'block' }}>
+                      Bisa pilih dari database atau ketik manual kapal baru
+                    </span>
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label className="form-label">No. Agenda</label>
@@ -518,6 +600,7 @@ export const PdsLuarNegeriModal = ({ isOpen, onClose, editItem = null }) => {
                       placeholder="AG-..."
                       value={formData.noAgenda}
                       onChange={(e) => setFormData({ ...formData, noAgenda: e.target.value.toUpperCase() })}
+                      disabled={isLocked}
                     />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
@@ -527,16 +610,32 @@ export const PdsLuarNegeriModal = ({ isOpen, onClose, editItem = null }) => {
                       className="form-input"
                       value={formData.noOrder}
                       onChange={(e) => setFormData({ ...formData, noOrder: e.target.value })}
+                      disabled={isLocked}
                     />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label">Pemohon</label>
+                    <label className="form-label" style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Building2 size={14} color="#0284c7" />
+                      <span>Pemohon (Perusahaan)</span>
+                    </label>
                     <input
                       type="text"
                       className="form-input"
+                      placeholder="Ketik / pilih perusahaan..."
+                      list="pds-ln-perusahaan-list"
                       value={formData.pemohon}
-                      onChange={(e) => setFormData({ ...formData, pemohon: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, pemohon: e.target.value.toUpperCase() })}
+                      style={{ textTransform: 'uppercase' }}
+                      disabled={isLocked}
                     />
+                    <datalist id="pds-ln-perusahaan-list">
+                      {companyOptions.map((c) => (
+                        <option key={c} value={c} />
+                      ))}
+                    </datalist>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.25rem', display: 'block' }}>
+                      Ketik perusahaan baru jika belum ada di database
+                    </span>
                   </div>
                 </div>
 

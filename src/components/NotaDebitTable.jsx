@@ -38,9 +38,10 @@ const formatRp = (val) =>
     : 'Rp 0';
 
 export const NotaDebitTable = () => {
-  const { notaDebit = [], addNotaDebit, updateNotaDebit, deleteNotaDebit } = useData();
+  const { notaDebit = [], addNotaDebit, updateNotaDebit, deleteNotaDebit, adminSettings } = useData();
   const { role } = useAuth();
 
+  const defaultPpnRate = adminSettings?.ppnRate !== undefined ? Number(adminSettings.ppnRate) : 11;
   const isAdmin = role === 'admin' || role === 'developer';
   const canEdit = isAdmin || role === 'keuangan' || role === 'finance';
 
@@ -333,16 +334,17 @@ export const NotaDebitTable = () => {
       // ── DATA ROWS ──
       let currentRow = 6;
       filteredData.forEach((item, idx) => {
+        const itemPpnRate = item.ppnRate !== undefined ? Number(item.ppnRate) : defaultPpnRate;
         const biayaSebelumPPN = (Number(item.feeSurvey) || 0) + (Number(item.biayaSurvey) || 0);
-        const ppn = Math.round(biayaSebelumPPN * 0.11);
-        const total = biayaSebelumPPN + ppn;
+        const ppn = item.ppnAmount !== undefined ? Number(item.ppnAmount) : Math.round(biayaSebelumPPN * (itemPpnRate / 100));
+        const total = item.totalSetelahPPN !== undefined ? Number(item.totalSetelahPPN) : (biayaSebelumPPN + ppn);
         const kat = item.kategoriBisnis || determineKategoriBisnis(item.jenisSurvey || '');
 
         const subRows = [
           { label: 'FEE SURVEY', value: Number(item.feeSurvey) || 0 },
           { label: 'BIAYA SURVEY', value: Number(item.biayaSurvey) || 0 },
           { label: 'BIAYA SEBELUM PPN', value: biayaSebelumPPN },
-          { label: 'PPN 11%', value: ppn },
+          { label: `PPN ${itemPpnRate}%`, value: ppn },
           { label: 'TOTAL BIAYA SETELAH PPN', value: total },
         ];
         const rowCount = subRows.length;
@@ -828,9 +830,10 @@ export const NotaDebitTable = () => {
                   </tr>
                 ) : (
                   filteredData.map((item, idx) => {
+                    const itemPpnRate = item.ppnRate !== undefined ? Number(item.ppnRate) : defaultPpnRate;
                     const biayaSebelumPPN = (Number(item.feeSurvey) || 0) + (Number(item.biayaSurvey) || 0);
-                    const ppnAmount = Math.round(biayaSebelumPPN * 0.11);
-                    const totalSetelahPPN = biayaSebelumPPN + ppnAmount;
+                    const ppnAmount = item.ppnAmount !== undefined ? Number(item.ppnAmount) : Math.round(biayaSebelumPPN * (itemPpnRate / 100));
+                    const totalSetelahPPN = item.totalSetelahPPN !== undefined ? Number(item.totalSetelahPPN) : (biayaSebelumPPN + ppnAmount);
                     const kat = item.kategoriBisnis || determineKategoriBisnis(item.jenisSurvey || '');
                     const meta = PROSES_BISNIS_META[kat] || { bg: '#f1f5f9', textColor: '#334155', name: kat };
 
@@ -838,7 +841,7 @@ export const NotaDebitTable = () => {
                       { label: 'FEE SURVEY', value: Number(item.feeSurvey) || 0, color: '#059669' },
                       { label: 'BIAYA SURVEY', value: Number(item.biayaSurvey) || 0, color: '#0284c7' },
                       { label: 'BIAYA SEBELUM PPN', value: biayaSebelumPPN, color: '#374151' },
-                      { label: 'PPN 11 %', value: ppnAmount, color: '#d97706', italic: true },
+                      { label: `PPN ${itemPpnRate}%`, value: ppnAmount, color: '#d97706', italic: true },
                       { label: 'TOTAL BIAYA SETELAH PPN', value: totalSetelahPPN, color: '#047857', bold: true, bg: '#f0fdf4' },
                     ];
 

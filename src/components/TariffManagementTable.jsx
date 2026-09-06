@@ -10,8 +10,11 @@ import {
   Navigation,
   Plane,
   Car,
-  Ship
+  Ship,
+  Receipt,
+  Percent
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { formatRupiah } from '../utils/formatters';
@@ -39,6 +42,9 @@ export const TariffManagementTable = () => {
 
   const [isEditingTat, setIsEditingTat] = useState(false);
   const [tatValue, setTatValue] = useState('');
+
+  const [isEditingPpn, setIsEditingPpn] = useState(false);
+  const [ppnValue, setPpnValue] = useState('');
 
   // If user lacks permission, show restricted notice
   if (!canManageTariffs) {
@@ -203,65 +209,168 @@ export const TariffManagementTable = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-      {/* Edit TAT Card Section */}
-      <div className="card-section" style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h3 className="card-title" style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Navigation size={18} color="var(--accent-primary)" />
-            Pengaturan Tarif Asal Tujuan (TAT)
-          </h3>
-          <div className="card-subtitle" style={{ marginTop: '0.2rem' }}>
-            Biaya ini secara otomatis ditambahkan sebagai komponen transport untuk kategori Luar Kota
+      {/* Parameter Tarif Operasional: TAT & PPN */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.25rem' }}>
+        {/* Edit TAT Card Section */}
+        <div className="card-section" style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h3 className="card-title" style={{ fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Navigation size={18} color="var(--accent-primary)" />
+              Pengaturan Tarif Asal Tujuan (TAT)
+            </h3>
+            <div className="card-subtitle" style={{ marginTop: '0.2rem', fontSize: '0.8rem' }}>
+              Biaya transport otomatis untuk kategori Luar Kota
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {isEditingTat ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Rp</span>
+                <input
+                  type="number"
+                  className="form-input"
+                  style={{ width: '130px' }}
+                  value={tatValue}
+                  onChange={(e) => setTatValue(e.target.value)}
+                  autoFocus
+                  step="1000"
+                />
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => {
+                    const val = Number(tatValue) || 0;
+                    updateAdminSettings({ tatLuarKota: val });
+                    setIsEditingTat(false);
+                    toast.success('Tarif TAT berhasil diperbarui!');
+                  }}
+                >
+                  Simpan
+                </button>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setIsEditingTat(false)}
+                >
+                  Batal
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                  {formatRupiah(adminSettings?.tatLuarKota ?? 750000)}
+                </div>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setTatValue(adminSettings?.tatLuarKota ?? 750000);
+                    setIsEditingTat(true);
+                  }}
+                  title="Ubah Tarif TAT"
+                >
+                  <Edit2 size={14} />
+                  <span>Ubah Nominal</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {isEditingTat ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Rp</span>
-              <input
-                type="number"
-                className="form-input"
-                style={{ width: '150px' }}
-                value={tatValue}
-                onChange={(e) => setTatValue(e.target.value)}
-                autoFocus
-                step="1000"
-              />
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => {
-                  updateAdminSettings({ tatLuarKota: Number(tatValue) || 0 });
-                  setIsEditingTat(false);
-                }}
-              >
-                Simpan
-              </button>
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={() => setIsEditingTat(false)}
-              >
-                Batal
-              </button>
+        {/* Edit PPN Card Section */}
+        <div className="card-section" style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h3 className="card-title" style={{ fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Receipt size={18} color="#d97706" />
+              Pengaturan Tarif PPN (Pajak Pertambahan Nilai)
+            </h3>
+            <div className="card-subtitle" style={{ marginTop: '0.2rem', fontSize: '0.8rem' }}>
+              Persentase tarif PPN resmi pada Nota Debit & Biaya Survei (Standar 11%)
             </div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
-                {formatRupiah(adminSettings?.tatLuarKota ?? 750000)}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {isEditingPpn ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'flex-end' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="number"
+                    className="form-input"
+                    style={{ width: '80px', textAlign: 'right', fontWeight: 800, fontSize: '1rem' }}
+                    value={ppnValue}
+                    onChange={(e) => setPpnValue(e.target.value)}
+                    autoFocus
+                    min="0"
+                    max="100"
+                    step="0.1"
+                  />
+                  <span style={{ fontSize: '1rem', fontWeight: 800, color: '#d97706' }}>%</span>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      const num = Number(ppnValue);
+                      if (isNaN(num) || num < 0 || num > 100) {
+                        toast.error('Masukkan persentase PPN yang valid (0 - 100%)');
+                        return;
+                      }
+                      updateAdminSettings({ ppnRate: num });
+                      setIsEditingPpn(false);
+                      toast.success(`Tarif PPN berhasil diperbarui menjadi ${num}%!`);
+                    }}
+                  >
+                    Simpan
+                  </button>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setIsEditingPpn(false)}
+                  >
+                    Batal
+                  </button>
+                </div>
+                {/* Quick Presets */}
+                <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Cepat:</span>
+                  {[11, 12, 10, 0].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setPpnValue(preset)}
+                      style={{
+                        background: Number(ppnValue) === preset ? '#d97706' : 'var(--bg-main)',
+                        color: Number(ppnValue) === preset ? '#ffffff' : 'var(--text-secondary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '4px',
+                        padding: '0.15rem 0.45rem',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        fontWeight: 700
+                      }}
+                    >
+                      {preset}%
+                    </button>
+                  ))}
+                </div>
               </div>
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={() => {
-                  setTatValue(adminSettings?.tatLuarKota ?? 750000);
-                  setIsEditingTat(true);
-                }}
-                title="Ubah Tarif TAT"
-              >
-                <Edit2 size={15} />
-                <span>Ubah Nominal</span>
-              </button>
-            </div>
-          )}
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.2rem' }}>
+                  <span style={{ fontSize: '1.35rem', fontWeight: 900, color: '#d97706' }}>
+                    {adminSettings?.ppnRate ?? 11}
+                  </span>
+                  <span style={{ fontSize: '1rem', fontWeight: 800, color: '#d97706' }}>%</span>
+                </div>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setPpnValue(adminSettings?.ppnRate ?? 11);
+                    setIsEditingPpn(true);
+                  }}
+                  title="Ubah Persentase Tarif PPN"
+                >
+                  <Edit2 size={14} />
+                  <span>Ubah Tarif PPN</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
