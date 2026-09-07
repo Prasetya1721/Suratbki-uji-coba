@@ -222,8 +222,9 @@ export const DataControlNotaDebitPrintModal = ({
                     <th rowSpan={2} style={{ ...thStyle, width: '6.5%' }}>TANGGAL ND</th>
                     <th rowSpan={2} style={{ ...thStyle, width: '7%' }}>NO INVOICE</th>
                     <th rowSpan={2} style={{ ...thStyle, width: '10%' }}>NAMA OBYEK PRODUKSI</th>
-                    <th rowSpan={2} style={{ ...thStyle, width: '6.5%' }}>AGENDA PERMOHONAN</th>
-                    <th rowSpan={2} style={{ ...thStyle, width: '8%' }}>LAPORAN SURVEY</th>
+                    <th rowSpan={2} style={{ ...thStyle, width: '6%' }}>AGENDA PERMOHONAN</th>
+                    <th rowSpan={2} style={{ ...thStyle, width: '6.5%' }}>NO SALES ORDER</th>
+                    <th rowSpan={2} style={{ ...thStyle, width: '7.5%' }}>LAPORAN SURVEY</th>
                     <th rowSpan={2} style={{ ...thStyle, width: '8.5%' }}>NAMA SURVEYOR</th>
                     <th rowSpan={2} style={{ ...thStyle, width: '9%' }}>PENGGUNA JASA</th>
                     <th rowSpan={2} style={{ ...thStyle, width: '5.5%' }}>JENIS SURVEY</th>
@@ -240,7 +241,7 @@ export const DataControlNotaDebitPrintModal = ({
                 <tbody>
                   {data.length === 0 ? (
                     <tr>
-                      <td colSpan={15} style={{ border: '1px solid #000000', padding: '1.5rem', textAlign: 'center', color: '#64748b' }}>
+                      <td colSpan={16} style={{ border: '1px solid #000000', padding: '1.5rem', textAlign: 'center', color: '#64748b' }}>
                         Tidak ada data Nota Debit yang tersedia untuk dicetak.
                       </td>
                     </tr>
@@ -285,6 +286,9 @@ export const DataControlNotaDebitPrintModal = ({
                               </td>
                               <td rowSpan={rowSpan} style={{ ...tdStyle(true), fontSize: '6.5pt' }}>
                                 {item.nomorAgendaPermohonan || '-'}
+                              </td>
+                              <td rowSpan={rowSpan} style={{ ...tdStyle(true), fontSize: '6.5pt', fontWeight: 700, color: '#0369a1' }}>
+                                {item.noSalesOrder || item.noSo || '-'}
                               </td>
                               <td rowSpan={rowSpan} style={{ ...tdStyle(), fontSize: '6.5pt' }}>
                                 {item.nomorLaporanSurvey || '-'}
@@ -362,7 +366,7 @@ export const DataControlNotaDebitPrintModal = ({
                 </tbody>
                 <tfoot>
                   <tr style={{ fontWeight: 900, background: '#e2e8f0', pageBreakInside: 'avoid' }}>
-                    <td colSpan={12} style={{ border: '1px solid #000000', borderBottom: '2.5px double #000000', padding: '5px 8px', textAlign: 'center', fontSize: '7.5pt' }}>
+                    <td colSpan={13} style={{ border: '1px solid #000000', borderBottom: '2.5px double #000000', padding: '5px 8px', textAlign: 'center', fontSize: '7.5pt' }}>
                       TOTAL REKAPITULASI ({data.length} NOTA DEBIT)
                     </td>
                     <td style={{ border: '1px solid #000000', borderBottom: '2.5px double #000000', padding: '5px 4px', textAlign: 'left', fontSize: '7pt' }}>

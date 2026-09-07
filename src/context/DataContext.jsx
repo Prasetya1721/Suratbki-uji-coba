@@ -924,6 +924,7 @@ export const DataProvider = ({ children }) => {
       nomorInvoice: (data.nomorInvoice || '').trim(),
       namaObyekProduksi: (data.namaObyekProduksi || '').trim().toUpperCase(),
       nomorAgendaPermohonan: (data.nomorAgendaPermohonan || '').trim(),
+      noSalesOrder: (data.noSalesOrder || data.noSo || '').trim(),
       nomorLaporanSurvey: (data.nomorLaporanSurvey || '').trim(),
       namaSurveyor: (data.namaSurveyor || '').trim(),
       penggunaJasa: (data.penggunaJasa || '').trim().toUpperCase(),
@@ -949,6 +950,9 @@ export const DataProvider = ({ children }) => {
           ? {
               ...item,
               ...updatedData,
+              noSalesOrder: updatedData.noSalesOrder !== undefined
+                ? (updatedData.noSalesOrder || '').trim()
+                : (item.noSalesOrder || item.noSo || '').trim(),
               namaObyekProduksi: (updatedData.namaObyekProduksi || item.namaObyekProduksi || '').toUpperCase(),
               penggunaJasa: (updatedData.penggunaJasa || item.penggunaJasa || '').toUpperCase(),
               kategoriBisnis: updatedData.kategoriBisnis || item.kategoriBisnis || determineKategoriBisnis(updatedData.jenisSurvey || item.jenisSurvey || ''),

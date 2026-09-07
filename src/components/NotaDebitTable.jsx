@@ -167,6 +167,7 @@ export const NotaDebitTable = () => {
           (item.penggunaJasa || '').toLowerCase().includes(s) ||
           (item.jenisSurvey || '').toLowerCase().includes(s) ||
           (item.nomorAgendaPermohonan || '').toLowerCase().includes(s) ||
+          (item.noSalesOrder || item.noSo || '').toLowerCase().includes(s) ||
           (item.nomorLaporanSurvey || '').toLowerCase().includes(s);
         if (!matches) return false;
       }
@@ -260,15 +261,16 @@ export const NotaDebitTable = () => {
         { width: 22 },  // E: NOMOR INVOICE
         { width: 22 },  // F: NAMA OBYEK
         { width: 16 },  // G: AGENDA
-        { width: 22 },  // H: NO LAPORAN
-        { width: 22 },  // I: NAMA SURVEYOR
-        { width: 26 },  // J: PENGGUNA JASA
-        { width: 16 },  // K: JENIS SURVEY
-        { width: 26 },  // L: PROSES BISNIS
-        { width: 28 },  // M: BIAYA (label) - diperlebar agar label seperti TOTAL BIAYA SETELAH PPN tidak wrap atau terpotong
-        { width: 18 },  // N: JUMLAH RP - diperlebar agar nominal tidak overflow
-        { width: 22 },  // O: TTD PENERIMA
-        { width: 18 },  // P: KET
+        { width: 18 },  // H: NO SALES ORDER
+        { width: 22 },  // I: NO LAPORAN
+        { width: 22 },  // J: NAMA SURVEYOR
+        { width: 26 },  // K: PENGGUNA JASA
+        { width: 16 },  // L: JENIS SURVEY
+        { width: 26 },  // M: PROSES BISNIS
+        { width: 28 },  // N: BIAYA (label) - diperlebar agar label seperti TOTAL BIAYA SETELAH PPN tidak wrap atau terpotong
+        { width: 18 },  // O: JUMLAH RP - diperlebar agar nominal tidak overflow
+        { width: 22 },  // P: TTD PENERIMA
+        { width: 18 },  // Q: KET
       ];
 
       const NAVY = { argb: '0C2C52' };
@@ -289,7 +291,7 @@ export const NotaDebitTable = () => {
       const LEFT = { horizontal: 'left', vertical: 'middle', wrapText: true };
 
       // ── ROW 1: Judul Besar ──
-      ws.mergeCells('A1:P1');
+      ws.mergeCells('A1:Q1');
       const r1 = ws.getCell('A1');
       r1.value = 'DATA CONTROL PENGGUNAAN FORM NOTA DEBIT CABANG PONTIANAK';
       r1.font = { name: 'Arial', size: 13, bold: true, color: NAVY };
@@ -297,7 +299,7 @@ export const NotaDebitTable = () => {
       ws.getRow(1).height = 22;
 
       // ── ROW 2: Sub-judul ──
-      ws.mergeCells('A2:P2');
+      ws.mergeCells('A2:Q2');
       const r2 = ws.getCell('A2');
       r2.value = filterSummaryLabel
         ? `SEGMEN KLASIFIKASI • ${filterSummaryLabel.toUpperCase()}`
@@ -321,13 +323,14 @@ export const NotaDebitTable = () => {
         { col: 'E', label: 'NOMOR\nINVOICE' },
         { col: 'F', label: 'NAMA OBYEK\nPRODUKSI' },
         { col: 'G', label: 'NOMOR AGENDA\nPERMOHONAN' },
-        { col: 'H', label: 'NOMOR LAPORAN\nSURVEY' },
-        { col: 'I', label: 'NAMA\nSURVEYOR' },
-        { col: 'J', label: 'PENGGUNA\nJASA' },
-        { col: 'K', label: 'JENIS\nSURVEY' },
-        { col: 'L', label: 'PROSES BISNIS /\nPOTENSI PRODUKSI' },
-        { col: 'O', label: 'TANDA TANGAN\nPENERIMA\nFORM ND' },
-        { col: 'P', label: 'KET' },
+        { col: 'H', label: 'NO SALES ORDER' },
+        { col: 'I', label: 'NOMOR LAPORAN\nSURVEY' },
+        { col: 'J', label: 'NAMA\nSURVEYOR' },
+        { col: 'K', label: 'PENGGUNA\nJASA' },
+        { col: 'L', label: 'JENIS\nSURVEY' },
+        { col: 'M', label: 'PROSES BISNIS /\nPOTENSI PRODUKSI' },
+        { col: 'P', label: 'TANDA TANGAN\nPENERIMA\nFORM ND' },
+        { col: 'Q', label: 'KET' },
       ];
 
       singleRowHeaders.forEach(({ col, label }) => {
@@ -340,23 +343,23 @@ export const NotaDebitTable = () => {
         c.border = THIN;
       });
 
-      // Kolom BIAYA: merge M4:N4, lalu baris 5 split ke M5 & N5
-      ws.mergeCells('M4:N4');
-      const cBiaya = ws.getCell('M4');
+      // Kolom BIAYA: merge N4:O4, lalu baris 5 split ke N5 & O5
+      ws.mergeCells('N4:O4');
+      const cBiaya = ws.getCell('N4');
       cBiaya.value = 'BIAYA';
       cBiaya.fill = headerFill;
       cBiaya.font = hFont;
       cBiaya.alignment = CENTER;
       cBiaya.border = THIN;
 
-      const cBiayaLabel = ws.getCell('M5');
+      const cBiayaLabel = ws.getCell('N5');
       cBiayaLabel.value = 'KETERANGAN BIAYA';
       cBiayaLabel.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E3A5F' } };
       cBiayaLabel.font = { name: 'Arial', size: 8, bold: true, color: WHITE };
       cBiayaLabel.alignment = CENTER;
       cBiayaLabel.border = THIN;
 
-      const cJumlah = ws.getCell('N5');
+      const cJumlah = ws.getCell('O5');
       cJumlah.value = 'JUMLAH RP';
       cJumlah.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E3A5F' } };
       cJumlah.font = { name: 'Arial', size: 8, bold: true, color: WHITE };
@@ -393,13 +396,14 @@ export const NotaDebitTable = () => {
           { col: 5, val: item.nomorInvoice || '' },
           { col: 6, val: item.namaObyekProduksi || '' },
           { col: 7, val: item.nomorAgendaPermohonan || '' },
-          { col: 8, val: item.nomorLaporanSurvey || '' },
-          { col: 9, val: item.namaSurveyor || '' },
-          { col: 10, val: item.penggunaJasa || '' },
-          { col: 11, val: item.jenisSurvey || '' },
-          { col: 12, val: kat },
-          { col: 15, val: (item.tandaTanganPenerima && item.tandaTanganPenerima !== '-' && item.tandaTanganPenerima.toLowerCase() !== 'aada') ? item.tandaTanganPenerima : 'Fitrian A,Md' },
-          { col: 16, val: item.keterangan || '' },
+          { col: 8, val: item.noSalesOrder || item.noSo || '' },
+          { col: 9, val: item.nomorLaporanSurvey || '' },
+          { col: 10, val: item.namaSurveyor || '' },
+          { col: 11, val: item.penggunaJasa || '' },
+          { col: 12, val: item.jenisSurvey || '' },
+          { col: 13, val: kat },
+          { col: 16, val: (item.tandaTanganPenerima && item.tandaTanganPenerima !== '-' && item.tandaTanganPenerima.toLowerCase() !== 'aada') ? item.tandaTanganPenerima : 'Fitrian A,Md' },
+          { col: 17, val: item.keterangan || '' },
         ];
 
         commonCells.forEach(({ col }) => {
@@ -412,7 +416,7 @@ export const NotaDebitTable = () => {
           const cell = ws.getCell(currentRow, col);
           cell.value = val;
           cell.font = { name: 'Arial', size: 8 };
-          cell.alignment = col === 6 || col === 10 ? LEFT : CENTER;
+          cell.alignment = col === 6 || col === 11 ? LEFT : CENTER;
           cell.border = THIN;
         });
 
@@ -421,7 +425,7 @@ export const NotaDebitTable = () => {
           const isTotal = subIdx === 4;
           const isPpn = subIdx === 3;
 
-          const labelCell = ws.getCell(rowNum, 13);
+          const labelCell = ws.getCell(rowNum, 14);
           labelCell.value = sub.label;
           labelCell.font = {
             name: 'Arial', size: 8.5,
@@ -435,7 +439,7 @@ export const NotaDebitTable = () => {
           labelCell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };
           labelCell.border = THIN;
 
-          const valCell = ws.getCell(rowNum, 14);
+          const valCell = ws.getCell(rowNum, 15);
           valCell.value = sub.value;
           valCell.numFmt = '"Rp "#,##0';
           valCell.font = {
@@ -456,7 +460,7 @@ export const NotaDebitTable = () => {
       });
 
       // ── FOOTER TOTAL ──
-      ws.mergeCells(currentRow, 1, currentRow, 12);
+      ws.mergeCells(currentRow, 1, currentRow, 13);
       const totalLabelCell = ws.getCell(currentRow, 1);
       totalLabelCell.value = `TOTAL (${filteredData.length} Nota Debit)`;
       totalLabelCell.font = { name: 'Arial', size: 10, bold: true, color: NAVY };
@@ -464,15 +468,15 @@ export const NotaDebitTable = () => {
       totalLabelCell.alignment = CENTER;
       totalLabelCell.border = BOLD_BORDER;
 
-      ws.mergeCells(currentRow, 13, currentRow, 13);
-      const totalFeeCell = ws.getCell(currentRow, 13);
+      ws.mergeCells(currentRow, 14, currentRow, 14);
+      const totalFeeCell = ws.getCell(currentRow, 14);
       totalFeeCell.value = 'TOTAL KESELURUHAN';
       totalFeeCell.font = { name: 'Arial', size: 9, bold: true, color: NAVY };
       totalFeeCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'DBEAFE' } };
       totalFeeCell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };
       totalFeeCell.border = BOLD_BORDER;
 
-      const totalValCell = ws.getCell(currentRow, 14);
+      const totalValCell = ws.getCell(currentRow, 15);
       totalValCell.value = totalSetelahPPN;
       totalValCell.numFmt = '"Rp "#,##0';
       totalValCell.font = { name: 'Arial', size: 10.5, bold: true, color: { argb: '047857' } };
@@ -480,8 +484,8 @@ export const NotaDebitTable = () => {
       totalValCell.alignment = { horizontal: 'right', vertical: 'middle' };
       totalValCell.border = BOLD_BORDER;
 
-      ws.mergeCells(currentRow, 15, currentRow, 16);
-      ws.getCell(currentRow, 15).border = BOLD_BORDER;
+      ws.mergeCells(currentRow, 16, currentRow, 17);
+      ws.getCell(currentRow, 16).border = BOLD_BORDER;
       ws.getRow(currentRow).height = 24;
 
       // ── DOWNLOAD ──
@@ -870,6 +874,7 @@ export const NotaDebitTable = () => {
                   <th rowSpan={2} style={{ ...thStyle, minWidth: 140 }}>NOMOR<br />INVOICE</th>
                   <th rowSpan={2} style={{ ...thStyle, minWidth: 130 }}>NAMA OBYEK<br />PRODUKSI</th>
                   <th rowSpan={2} style={{ ...thStyle, minWidth: 110 }}>NOMOR AGENDA<br />PERMOHONAN</th>
+                  <th rowSpan={2} style={{ ...thStyle, minWidth: 125 }}>NO SALES ORDER</th>
                   <th rowSpan={2} style={{ ...thStyle, minWidth: 140 }}>NOMOR<br />LAPORAN SURVEY</th>
                   <th rowSpan={2} style={{ ...thStyle, minWidth: 140 }}>NAMA<br />SURVEYOR</th>
                   <th rowSpan={2} style={{ ...thStyle, minWidth: 160 }}>PENGGUNA<br />JASA</th>
@@ -888,7 +893,7 @@ export const NotaDebitTable = () => {
               <tbody>
                 {filteredData.length === 0 ? (
                   <tr>
-                    <td colSpan={canEdit ? 18 : 17} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                    <td colSpan={canEdit ? 19 : 18} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
                       <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🧾</div>
                       <p style={{ margin: 0, fontWeight: 600 }}>Belum ada data Nota Debit.</p>
                       {canEdit && (
@@ -933,6 +938,7 @@ export const NotaDebitTable = () => {
                             <td rowSpan={rowSpan} style={{ ...tdStyle(), padding: '0.4rem', fontSize: '0.76rem', color: 'var(--text-secondary)' }}>{item.nomorInvoice || '-'}</td>
                             <td rowSpan={rowSpan} style={{ ...tdStyle(), padding: '0.4rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase' }}>{item.namaObyekProduksi || '-'}</td>
                             <td rowSpan={rowSpan} style={{ ...tdStyle(true), padding: '0.4rem', fontSize: '0.76rem', color: 'var(--text-secondary)' }}>{item.nomorAgendaPermohonan || '-'}</td>
+                            <td rowSpan={rowSpan} style={{ ...tdStyle(true), padding: '0.4rem', fontSize: '0.76rem', fontWeight: 700, color: '#0369a1' }}>{item.noSalesOrder || item.noSo || '-'}</td>
                             <td rowSpan={rowSpan} style={{ ...tdStyle(), padding: '0.4rem', fontSize: '0.76rem', color: 'var(--text-secondary)' }}>{item.nomorLaporanSurvey || '-'}</td>
                             <td rowSpan={rowSpan} style={{ ...tdStyle(), padding: '0.4rem', fontWeight: 700, color: 'var(--text-primary)' }}>{item.namaSurveyor || '-'}</td>
                             <td rowSpan={rowSpan} style={{ ...tdStyle(), padding: '0.4rem', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase' }}>{item.penggunaJasa || '-'}</td>

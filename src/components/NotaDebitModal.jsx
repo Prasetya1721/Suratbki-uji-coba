@@ -61,6 +61,7 @@ const EMPTY_FORM = {
   nomorInvoice: '',
   namaObyekProduksi: '',
   nomorAgendaPermohonan: '',
+  noSalesOrder: '',
   nomorLaporanSurvey: '',
   namaSurveyor: '',
   penggunaJasa: '',
@@ -160,18 +161,30 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
         if (matched.noAgenda) {
           updates.nomorAgendaPermohonan = matched.noAgenda;
         }
+        if (matched.noSo || matched.noSalesOrder) {
+          updates.noSalesOrder = matched.noSo || matched.noSalesOrder;
+        }
         if (matched.jenisSurvey) {
           updates.jenisSurvey = matched.jenisSurvey;
           updates.kategoriBisnis = determineKategoriBisnis(matched.jenisSurvey);
         }
       }
 
-      // Jika belum ada jenis survey dari matched kapal, cari riwayat survey kapal di suratTugas
+      // Jika belum ada data dari matched kapal, cari riwayat di laporanSurvei atau suratTugas
+      const lpMatch = (laporanSurvei || []).find(
+        (lp) => (lp.namaKapal || '').toUpperCase().includes(upper) && (lp.noSo || lp.nomorLaporan)
+      );
+      if (lpMatch) {
+        if (lpMatch.noSo && !updates.noSalesOrder) updates.noSalesOrder = lpMatch.noSo;
+        if (lpMatch.nomorLaporan && !updates.nomorLaporanSurvey) updates.nomorLaporanSurvey = lpMatch.nomorLaporan;
+      }
+
       if (!matched?.jenisSurvey) {
         const stMatch = (suratTugas || []).find(
-          (st) => (st.namaKapal || '').toUpperCase().includes(upper) && (st.jenisSurvey || st.perihal)
+          (st) => (st.namaKapal || '').toUpperCase().includes(upper) && (st.jenisSurvey || st.perihal || st.noSo)
         );
         if (stMatch) {
+          if (stMatch.noSo && !updates.noSalesOrder) updates.noSalesOrder = stMatch.noSo;
           updates.jenisSurvey = stMatch.jenisSurvey || stMatch.perihal;
           updates.kategoriBisnis = determineKategoriBisnis(updates.jenisSurvey);
         }
@@ -205,6 +218,7 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
         setForm({
           ...EMPTY_FORM,
           ...initialData,
+          noSalesOrder: initialData.noSalesOrder || initialData.noSo || '',
           ppnRate: globalPpnRate,
           tandaTanganPenerima: (initialData.tandaTanganPenerima && initialData.tandaTanganPenerima !== '-' && initialData.tandaTanganPenerima.toLowerCase() !== 'aada')
             ? initialData.tandaTanganPenerima
@@ -531,6 +545,7 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
                         Tersambung: <strong>{matchedShip.namaKapal}</strong>
                         {matchedShip.pemohon ? ` • Pemilik: ${matchedShip.pemohon}` : ''}
                         {matchedShip.noAgenda ? ` • Agenda: ${matchedShip.noAgenda}` : ''}
+                        {(matchedShip.noSo || matchedShip.noSalesOrder) ? ` • SO: ${matchedShip.noSo || matchedShip.noSalesOrder}` : ''}
                       </span>
                     </div>
                   )}
@@ -538,10 +553,10 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
               </div>
             </div>
 
-            {/* SEKSI 3: Nomor Agenda & Laporan */}
+            {/* SEKSI 3: Nomor Agenda, Sales Order & Laporan */}
             <div>
-              <div style={sectionTitleStyle}>📌 Referensi Agenda & Laporan</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div style={sectionTitleStyle}>📌 Referensi Agenda, Sales Order & Laporan</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem' }}>
                 <div style={groupStyle}>
                   <label style={labelStyle}>
                     <Hash size={13} color="#0369a1" />
@@ -553,6 +568,19 @@ export const NotaDebitModal = ({ isOpen, onClose, onSave, initialData = null, is
                     placeholder="Contoh: 00003FK25"
                     value={form.nomorAgendaPermohonan}
                     onChange={(e) => handleChange('nomorAgendaPermohonan', e.target.value)}
+                  />
+                </div>
+                <div style={groupStyle}>
+                  <label style={labelStyle}>
+                    <Hash size={13} color="#0369a1" />
+                    No. Sales Order
+                  </label>
+                  <input
+                    style={inputStyle}
+                    type="text"
+                    placeholder="Contoh: 3000255955 / RFQ..."
+                    value={form.noSalesOrder}
+                    onChange={(e) => handleChange('noSalesOrder', e.target.value)}
                   />
                 </div>
                 <div style={groupStyle}>
