@@ -576,13 +576,14 @@ export const BiayaPdsPrintModal = ({
                   <table style={{ width: 'auto', borderCollapse: 'collapse', lineHeight: '1.5' }}>
                     <tbody>
                       <tr>
-                        <td colSpan={3} style={{ whiteSpace: 'nowrap', paddingBottom: '0.15rem' }}>
+                        <td colSpan={3} style={{ whiteSpace: 'nowrap', paddingBottom: '0.15rem', fontWeight: 'bold' }}>
                           LAMPIRAN SURAT TUGAS
                         </td>
                       </tr>
                       <tr>
                         <td style={{ whiteSpace: 'nowrap', paddingRight: '0.75rem' }}>
                           <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                            <span>No.&nbsp;</span>
                             <span style={{ display: 'inline-block', textAlign: 'left', minWidth: isDefaultA0 ? '50px' : 'auto' }}>
                               {nomorPrefix || (isDefaultA0 ? 'A 0' : <span>&nbsp;</span>)}
                             </span>
@@ -590,20 +591,20 @@ export const BiayaPdsPrintModal = ({
                           </span>
                         </td>
                         <td style={{ width: '15px', textAlign: 'center' }}>:</td>
-                        <td style={{ fontWeight: 'bold' }}>{tglMulaiStr}</td>
+                        <td style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>{tglMulaiStr}</td>
                       </tr>
                       <tr>
                         <td style={{ whiteSpace: 'nowrap', paddingRight: '0.75rem' }}>DAFTAR BIAYA PERJALANAN DINAS KE</td>
                         <td style={{ textAlign: 'center' }}>:</td>
-                        <td style={{ fontWeight: 'bold' }}>{lokasiStr}</td>
+                        <td style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>{lokasiStr}</td>
                       </tr>
                       <tr>
                         <td style={{ whiteSpace: 'nowrap', paddingRight: '0.75rem' }}>DALAM RANGKA SURVEY KLAS</td>
                         <td style={{ textAlign: 'center' }}>:</td>
-                        <td style={{ fontWeight: 'bold' }}>{kapalStr}</td>
+                        <td style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>{kapalStr}</td>
                       </tr>
                       <tr>
-                        <td colSpan={3} style={{ paddingTop: '0.35rem', letterSpacing: '0.01em' }}>SESUAI DAFTAR DAN KUITANSI TERLAMPIR</td>
+                        <td colSpan={3} style={{ paddingTop: '0.35rem', letterSpacing: '0.01em', fontWeight: 'bold' }}>SESUAI DAFTAR DAN KUITANSI TERLAMPIR</td>
                       </tr>
                     </tbody>
                   </table>

@@ -121,18 +121,14 @@ export const exportBiayaPerjalananDinas = async (item, usersList = [], gradeTari
     const prefix = slashIdx !== -1 ? cleanNomor.substring(0, slashIdx).trim() : cleanNomor;
     const suffix = slashIdx !== -1 ? cleanNomor.substring(slashIdx).trim() : '/SV.201/PK/KI-26';
 
-    sheet.mergeCells('A1:E1');
-    sheet.getCell('A1').value = `LAMPIRAN SURAT TUGAS No. ${prefix || 'A 0'}    ${suffix}`;
+    sheet.mergeCells('A1:B1');
+    sheet.getCell('A1').value = 'LAMPIRAN SURAT TUGAS';
     sheet.getCell('A1').font = { name: 'Calibri', size: 10, bold: true };
     sheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'left' };
 
-    sheet.mergeCells('F1:H1');
-    sheet.getCell('F1').value = tglMulaiStr;
-    sheet.getCell('F1').font = { name: 'Calibri', size: 10, bold: true };
-    sheet.getCell('F1').alignment = { vertical: 'middle', horizontal: 'left' };
-
     sheet.mergeCells('A2:B2');
-    sheet.getCell('A2').value = 'DAFTAR BIAYA PERJALANAN DINAS KE';
+    const noLabel = prefix ? (prefix.toLowerCase().startsWith('no') ? prefix : `No. ${prefix}`) : 'No. A 0';
+    sheet.getCell('A2').value = `${noLabel}   ${suffix}`;
     sheet.getCell('A2').font = { name: 'Calibri', size: 10, bold: true };
     sheet.getCell('A2').alignment = { vertical: 'middle', horizontal: 'left' };
 
@@ -140,13 +136,13 @@ export const exportBiayaPerjalananDinas = async (item, usersList = [], gradeTari
     sheet.getCell('C2').font = { name: 'Calibri', size: 10, bold: true };
     sheet.getCell('C2').alignment = { vertical: 'middle', horizontal: 'center' };
 
-    sheet.mergeCells('D2:H2');
-    sheet.getCell('D2').value = lokasiStr;
+    sheet.mergeCells('D2:E2');
+    sheet.getCell('D2').value = (tglMulaiStr || '').toUpperCase();
     sheet.getCell('D2').font = { name: 'Calibri', size: 10, bold: true };
     sheet.getCell('D2').alignment = { vertical: 'middle', horizontal: 'left' };
 
     sheet.mergeCells('A3:B3');
-    sheet.getCell('A3').value = 'DALAM RANGKA SURVEY KLAS';
+    sheet.getCell('A3').value = 'DAFTAR BIAYA PERJALANAN DINAS KE';
     sheet.getCell('A3').font = { name: 'Calibri', size: 10, bold: true };
     sheet.getCell('A3').alignment = { vertical: 'middle', horizontal: 'left' };
 
@@ -155,18 +151,32 @@ export const exportBiayaPerjalananDinas = async (item, usersList = [], gradeTari
     sheet.getCell('C3').alignment = { vertical: 'middle', horizontal: 'center' };
 
     sheet.mergeCells('D3:H3');
-    sheet.getCell('D3').value = kapalStr;
+    sheet.getCell('D3').value = (lokasiStr || '').toUpperCase();
     sheet.getCell('D3').font = { name: 'Calibri', size: 10, bold: true };
     sheet.getCell('D3').alignment = { vertical: 'middle', horizontal: 'left' };
 
-    sheet.mergeCells('A4:H4');
-    sheet.getCell('A4').value = 'SESUAI DAFTAR DAN KUITANSI TERLAMPIR';
+    sheet.mergeCells('A4:B4');
+    sheet.getCell('A4').value = 'DALAM RANGKA SURVEY KLAS';
     sheet.getCell('A4').font = { name: 'Calibri', size: 10, bold: true };
     sheet.getCell('A4').alignment = { vertical: 'middle', horizontal: 'left' };
 
-    sheet.getRow(5).height = 10;
+    sheet.getCell('C4').value = ':';
+    sheet.getCell('C4').font = { name: 'Calibri', size: 10, bold: true };
+    sheet.getCell('C4').alignment = { vertical: 'middle', horizontal: 'center' };
 
-    // Row 6-7: Table headers
+    sheet.mergeCells('D4:H4');
+    sheet.getCell('D4').value = (kapalStr || '').toUpperCase();
+    sheet.getCell('D4').font = { name: 'Calibri', size: 10, bold: true };
+    sheet.getCell('D4').alignment = { vertical: 'middle', horizontal: 'left' };
+
+    sheet.mergeCells('A5:H5');
+    sheet.getCell('A5').value = 'SESUAI DAFTAR DAN KUITANSI TERLAMPIR';
+    sheet.getCell('A5').font = { name: 'Calibri', size: 10, bold: true };
+    sheet.getCell('A5').alignment = { vertical: 'middle', horizontal: 'left' };
+
+    sheet.getRow(6).height = 10;
+
+    // Row 7-8: Table headers
     const headerFont = { name: 'Calibri', bold: true, size: 9 };
     const headerAlign = { horizontal: 'center', vertical: 'middle', wrapText: true };
 
@@ -178,55 +188,55 @@ export const exportBiayaPerjalananDinas = async (item, usersList = [], gradeTari
       c.border = thinBorder;
     };
 
-    // Row 6 merges
-    sheet.mergeCells('A6:A7'); setHeaderCell('A6', 'NO.');
-    sheet.mergeCells('B6:B7'); setHeaderCell('B6', 'NAMA');
-    sheet.mergeCells('C6:E6'); setHeaderCell('C6', 'JUMLAH');
-    sheet.mergeCells('F6:G6'); setHeaderCell('F6', 'TANGGAL');
-    sheet.mergeCells('H6:J6'); setHeaderCell('H6', 'TRANSPORT');
-    sheet.mergeCells('K6:L6'); setHeaderCell('K6', 'UANG HARIAN');
-    sheet.mergeCells('M6:N6'); setHeaderCell('M6', 'UANG HOTEL');
-    sheet.mergeCells('O6:O7'); setHeaderCell('O6', 'HR LBR\n50%*U.HR');
-    sheet.mergeCells('P6:P7'); setHeaderCell('P6', 'JUMLAH');
-    sheet.mergeCells('Q6:Q7'); setHeaderCell('Q6', 'JUMLAH\nTERIMA');
-    sheet.mergeCells('R6:R7'); setHeaderCell('R6', 'TANDA\nTERIMA');
+    // Row 7 merges
+    sheet.mergeCells('A7:A8'); setHeaderCell('A7', 'NO.');
+    sheet.mergeCells('B7:B8'); setHeaderCell('B7', 'NAMA');
+    sheet.mergeCells('C7:E7'); setHeaderCell('C7', 'JUMLAH');
+    sheet.mergeCells('F7:G7'); setHeaderCell('F7', 'TANGGAL');
+    sheet.mergeCells('H7:J7'); setHeaderCell('H7', 'TRANSPORT');
+    sheet.mergeCells('K7:L7'); setHeaderCell('K7', 'UANG HARIAN');
+    sheet.mergeCells('M7:N7'); setHeaderCell('M7', 'UANG HOTEL');
+    sheet.mergeCells('O7:O8'); setHeaderCell('O7', 'HR LBR\n50%*U.HR');
+    sheet.mergeCells('P7:P8'); setHeaderCell('P7', 'JUMLAH');
+    sheet.mergeCells('Q7:Q8'); setHeaderCell('Q7', 'JUMLAH\nTERIMA');
+    sheet.mergeCells('R7:R8'); setHeaderCell('R7', 'TANDA\nTERIMA');
 
-    // Row 7 sub-headers
-    setHeaderCell('C7', 'HR');
-    setHeaderCell('D7', 'MLM');
-    setHeaderCell('E7', 'HR LBR');
-    setHeaderCell('F7', 'BERANGKAT');
-    setHeaderCell('G7', 'KEMBALI');
+    // Row 8 sub-headers
+    setHeaderCell('C8', 'HR');
+    setHeaderCell('D8', 'MLM');
+    setHeaderCell('E8', 'HR LBR');
+    setHeaderCell('F8', 'BERANGKAT');
+    setHeaderCell('G8', 'KEMBALI');
 
     if (isLuarKota) {
-      setHeaderCell('H7', 'TIKET PESAWAT,\nTAXI.DLL');
-      setHeaderCell('I7', 'ASAL\nTUJUAN');
-      setHeaderCell('J7', 'SESUAI SK\nDIREKSI');
+      setHeaderCell('H8', 'TIKET PESAWAT,\nTAXI.DLL');
+      setHeaderCell('I8', 'ASAL\nTUJUAN');
+      setHeaderCell('J8', 'SESUAI SK\nDIREKSI');
     } else {
-      setHeaderCell('H7', 'SESUAI DENGAN\nSK DIREKSI');
-      setHeaderCell('I7', 'ASAL\nTUJUAN');
-      setHeaderCell('J7', 'DALAM\nTUGAS');
+      setHeaderCell('H8', 'SESUAI DENGAN\nSK DIREKSI');
+      setHeaderCell('I8', 'ASAL\nTUJUAN');
+      setHeaderCell('J8', 'DALAM\nTUGAS');
     }
-    setHeaderCell('K7', '11');
-    setHeaderCell('L7', '12=11*3');
-    setHeaderCell('M7', '13');
-    setHeaderCell('N7', '14=13*4');
+    setHeaderCell('K8', '11');
+    setHeaderCell('L8', '12=11*3');
+    setHeaderCell('M8', '13');
+    setHeaderCell('N8', '14=13*4');
 
     // Row heights for header
-    sheet.getRow(6).height = 30;
     sheet.getRow(7).height = 30;
+    sheet.getRow(8).height = 30;
 
-    // Row 8: Column indices (angka numerik murni sebagai integer agar bebas warning hijau Excel)
+    // Row 9: Column indices (angka numerik murni sebagai integer agar bebas warning hijau Excel)
     const idxLabels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, '12=11*3', 13, '14=13*4', '15=5*11/50%', 16, '17=16', 18];
     idxLabels.forEach((lbl, i) => {
-      const cell = sheet.getRow(8).getCell(i + 1);
+      const cell = sheet.getRow(9).getCell(i + 1);
       cell.value = lbl;
       cell.font = { name: 'Calibri', bold: true, italic: true, size: 8 };
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
       cell.border = thinBorder;
     });
 
-    // Row 9: Data
+    // Row 10: Data
     const dataAlign = { horizontal: 'center', vertical: 'middle' };
     const numAlign = { horizontal: 'right', vertical: 'middle' };
     const dataFont = { name: 'Calibri', size: 9 };
@@ -240,112 +250,112 @@ export const exportBiayaPerjalananDinas = async (item, usersList = [], gradeTari
       if (typeof value === 'number') cell.numFmt = '#,##0';
     };
 
-    setDataCell(9, 1, 1);
-    setDataCell(9, 2, petugasStr, { horizontal: 'left', vertical: 'middle' });
-    setDataCell(9, 3, hr);
-    setDataCell(9, 4, mlm);
-    setDataCell(9, 5, hrLbr > 0 ? hrLbr : '-');
-    setDataCell(9, 6, tglMulaiStr);
-    setDataCell(9, 7, tglSelesaiStr);
+    setDataCell(10, 1, 1);
+    setDataCell(10, 2, petugasStr, { horizontal: 'left', vertical: 'middle' });
+    setDataCell(10, 3, hr);
+    setDataCell(10, 4, mlm);
+    setDataCell(10, 5, hrLbr > 0 ? hrLbr : '-');
+    setDataCell(10, 6, tglMulaiStr);
+    setDataCell(10, 7, tglSelesaiStr);
 
     if (isLuarKota) {
-      setDataCell(9, 8, tiketPesawatTaxi > 0 ? tiketPesawatTaxi : '-', numAlign);
-      setDataCell(9, 9, biayaTAT > 0 ? biayaTAT : '-', numAlign);
-      setDataCell(9, 10, rateSK > 0 ? rateSK : '-', numAlign);
+      setDataCell(10, 8, tiketPesawatTaxi > 0 ? tiketPesawatTaxi : '-', numAlign);
+      setDataCell(10, 9, biayaTAT > 0 ? biayaTAT : '-', numAlign);
+      setDataCell(10, 10, rateSK > 0 ? rateSK : '-', numAlign);
     } else {
-      setDataCell(9, 8, rateSK > 0 ? rateSK : '-', numAlign);
-      setDataCell(9, 9, '-');
-      setDataCell(9, 10, '-');
+      setDataCell(10, 8, rateSK > 0 ? rateSK : '-', numAlign);
+      setDataCell(10, 9, '-');
+      setDataCell(10, 10, '-');
     }
 
-    setDataCell(9, 11, uangHarianRate > 0 ? uangHarianRate : '-', numAlign);
-    setDataCell(9, 12, uangHarianTotal > 0 ? uangHarianTotal : '-', numAlign);
-    setDataCell(9, 13, uangHotelRate > 0 ? uangHotelRate : '-', numAlign);
-    setDataCell(9, 14, uangHotelTotal > 0 ? uangHotelTotal : '-', numAlign);
-    setDataCell(9, 15, hrLbrTotal > 0 ? hrLbrTotal : '-', numAlign);
-    setDataCell(9, 16, jumlah, numAlign);
-    setDataCell(9, 17, jumlah, numAlign);
-    setDataCell(9, 18, '');
+    setDataCell(10, 11, uangHarianRate > 0 ? uangHarianRate : '-', numAlign);
+    setDataCell(10, 12, uangHarianTotal > 0 ? uangHarianTotal : '-', numAlign);
+    setDataCell(10, 13, uangHotelRate > 0 ? uangHotelRate : '-', numAlign);
+    setDataCell(10, 14, uangHotelTotal > 0 ? uangHotelTotal : '-', numAlign);
+    setDataCell(10, 15, hrLbrTotal > 0 ? hrLbrTotal : '-', numAlign);
+    setDataCell(10, 16, jumlah, numAlign);
+    setDataCell(10, 17, jumlah, numAlign);
+    setDataCell(10, 18, '');
 
-    // Rows 10-12: Empty with borders
-    for (let r = 10; r <= 12; r++) {
+    // Rows 11-13: Empty with borders
+    for (let r = 11; r <= 13; r++) {
       for (let c = 1; c <= 18; c++) {
         const cell = sheet.getRow(r).getCell(c);
         cell.border = thinBorder;
       }
     }
 
-    // Row 13: Jumlah Total
-    sheet.mergeCells('A13:K13');
-    const jCell = sheet.getCell('A13');
+    // Row 14: Jumlah Total
+    sheet.mergeCells('A14:K14');
+    const jCell = sheet.getCell('A14');
     jCell.value = 'Jumlah';
     jCell.font = { name: 'Calibri', bold: true, size: 9 };
     jCell.alignment = { horizontal: 'right', vertical: 'middle' };
     jCell.border = thinBorder;
 
-    sheet.getCell('L13').border = thinBorder;
-    sheet.mergeCells('M13:O13');
-    sheet.getCell('M13').value = 'Rp.';
-    sheet.getCell('M13').font = { name: 'Calibri', bold: true, size: 9 };
-    sheet.getCell('M13').alignment = { horizontal: 'center', vertical: 'middle' };
-    sheet.getCell('M13').border = thinBorder;
+    sheet.getCell('L14').border = thinBorder;
+    sheet.mergeCells('M14:O14');
+    sheet.getCell('M14').value = 'Rp.';
+    sheet.getCell('M14').font = { name: 'Calibri', bold: true, size: 9 };
+    sheet.getCell('M14').alignment = { horizontal: 'center', vertical: 'middle' };
+    sheet.getCell('M14').border = thinBorder;
 
-    const pCell = sheet.getCell('P13');
+    const pCell = sheet.getCell('P14');
     pCell.value = jumlah;
     pCell.font = { name: 'Calibri', bold: true, size: 9 };
     pCell.numFmt = '#,##0';
     pCell.alignment = numAlign;
     pCell.border = thinBorder;
 
-    const qCell = sheet.getCell('Q13');
+    const qCell = sheet.getCell('Q14');
     qCell.value = jumlah;
     qCell.font = { name: 'Calibri', bold: true, size: 9 };
     qCell.numFmt = '#,##0';
     qCell.alignment = numAlign;
     qCell.border = thinBorder;
 
-    sheet.getCell('R13').border = thinBorder;
+    sheet.getCell('R14').border = thinBorder;
 
     // Signatures
-    sheet.mergeCells('B18:F18');
-    sheet.getCell('B18').value = 'Mengetahui';
-    sheet.getCell('B18').font = { name: 'Calibri', size: 9.5, bold: true };
-    sheet.getCell('B18').alignment = { horizontal: 'center', vertical: 'middle' };
-
     sheet.mergeCells('B19:F19');
-    sheet.getCell('B19').value = 'Kepala Cabang Madya Klas Pontianak';
-    sheet.getCell('B19').font = { name: 'Calibri', bold: true, size: 9.5 };
+    sheet.getCell('B19').value = 'Mengetahui';
+    sheet.getCell('B19').font = { name: 'Calibri', size: 9.5, bold: true };
     sheet.getCell('B19').alignment = { horizontal: 'center', vertical: 'middle' };
 
-    sheet.mergeCells('M18:R18');
-    sheet.getCell('M18').value = `PONTIANAK, ${tglMulaiStr}`;
-    sheet.getCell('M18').font = { name: 'Calibri', size: 9.5, bold: true };
-    sheet.getCell('M18').alignment = { horizontal: 'center', vertical: 'middle' };
+    sheet.mergeCells('B20:F20');
+    sheet.getCell('B20').value = 'Kepala Cabang Madya Klas Pontianak';
+    sheet.getCell('B20').font = { name: 'Calibri', bold: true, size: 9.5 };
+    sheet.getCell('B20').alignment = { horizontal: 'center', vertical: 'middle' };
 
     sheet.mergeCells('M19:R19');
-    sheet.getCell('M19').value = 'Pembuat Daftar';
+    sheet.getCell('M19').value = `PONTIANAK, ${tglMulaiStr}`;
     sheet.getCell('M19').font = { name: 'Calibri', size: 9.5, bold: true };
     sheet.getCell('M19').alignment = { horizontal: 'center', vertical: 'middle' };
 
-    sheet.mergeCells('B23:F23');
-    sheet.getCell('B23').value = kacabName;
-    sheet.getCell('B23').font = { name: 'Calibri', bold: true, underline: true, size: 10 };
-    sheet.getCell('B23').alignment = { horizontal: 'center', vertical: 'middle' };
+    sheet.mergeCells('M20:R20');
+    sheet.getCell('M20').value = 'Pembuat Daftar';
+    sheet.getCell('M20').font = { name: 'Calibri', size: 9.5, bold: true };
+    sheet.getCell('M20').alignment = { horizontal: 'center', vertical: 'middle' };
 
     sheet.mergeCells('B24:F24');
-    sheet.getCell('B24').value = kacabDesc;
-    sheet.getCell('B24').font = { name: 'Calibri', size: 9 };
+    sheet.getCell('B24').value = kacabName;
+    sheet.getCell('B24').font = { name: 'Calibri', bold: true, underline: true, size: 10 };
     sheet.getCell('B24').alignment = { horizontal: 'center', vertical: 'middle' };
 
-    sheet.mergeCells('M23:R23');
-    sheet.getCell('M23').value = pembuatName;
-    sheet.getCell('M23').font = { name: 'Calibri', bold: true, underline: true, size: 10 };
-    sheet.getCell('M23').alignment = { horizontal: 'center', vertical: 'middle' };
+    sheet.mergeCells('B25:F25');
+    sheet.getCell('B25').value = kacabDesc;
+    sheet.getCell('B25').font = { name: 'Calibri', size: 9 };
+    sheet.getCell('B25').alignment = { horizontal: 'center', vertical: 'middle' };
 
     sheet.mergeCells('M24:R24');
-    sheet.getCell('M24').value = pembuatDesc;
-    sheet.getCell('M24').font = { name: 'Calibri', size: 9 };
+    sheet.getCell('M24').value = pembuatName;
+    sheet.getCell('M24').font = { name: 'Calibri', bold: true, underline: true, size: 10 };
     sheet.getCell('M24').alignment = { horizontal: 'center', vertical: 'middle' };
+
+    sheet.mergeCells('M25:R25');
+    sheet.getCell('M25').value = pembuatDesc;
+    sheet.getCell('M25').font = { name: 'Calibri', size: 9 };
+    sheet.getCell('M25').alignment = { horizontal: 'center', vertical: 'middle' };
 
     // Generate buffer and download
     const buffer = await workbook.xlsx.writeBuffer();

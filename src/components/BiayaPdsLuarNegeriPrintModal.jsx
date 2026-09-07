@@ -189,24 +189,20 @@ export const BiayaPdsLuarNegeriPrintModal = ({
         { key: 'col19', width: 14 }   // S:  TANDA TERIMA 19
       ];
 
-      // ====== 1. HEADER DOKUMEN (Rows 1-4) ======
-      // Row 1: Judul Lampiran & Tanggal Mulai
+      // ====== 1. HEADER DOKUMEN (Rows 1-5) ======
+      // Row 1: LAMPIRAN SURAT TUGAS
       const r1 = worksheet.addRow([]);
       r1.height = 20;
-      r1.getCell(1).value = `LAMPIRAN SURAT TUGAS No. ${nomorPrefix || 'A 0'}    ${nomorSuffix}`;
+      r1.getCell(1).value = 'LAMPIRAN SURAT TUGAS';
       r1.getCell(1).font = { name: 'Calibri', size: 10, bold: true };
       r1.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
-      worksheet.mergeCells(`A${r1.number}:E${r1.number}`);
+      worksheet.mergeCells(`A${r1.number}:B${r1.number}`);
 
-      r1.getCell(6).value = tglMulaiStr;
-      r1.getCell(6).font = { name: 'Calibri', size: 10, bold: true };
-      r1.getCell(6).alignment = { vertical: 'middle', horizontal: 'left' };
-      worksheet.mergeCells(`F${r1.number}:H${r1.number}`);
-
-      // Row 2: DAFTAR BIAYA PERJALANAN DINAS KE : [NEGARA]
+      // Row 2: No. A 0   /SV.201/PK/KI-26 : [TANGGAL MULAI]
       const r2 = worksheet.addRow([]);
       r2.height = 19;
-      r2.getCell(1).value = 'DAFTAR BIAYA PERJALANAN DINAS KE';
+      const noLabel = nomorPrefix ? (nomorPrefix.toLowerCase().startsWith('no') ? nomorPrefix : `No. ${nomorPrefix}`) : 'No. A 0';
+      r2.getCell(1).value = `${noLabel}   ${nomorSuffix}`;
       r2.getCell(1).font = { name: 'Calibri', size: 10, bold: true };
       r2.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
       worksheet.mergeCells(`A${r2.number}:B${r2.number}`);
@@ -215,15 +211,15 @@ export const BiayaPdsLuarNegeriPrintModal = ({
       r2.getCell(3).font = { name: 'Calibri', size: 10, bold: true };
       r2.getCell(3).alignment = { vertical: 'middle', horizontal: 'center' };
 
-      r2.getCell(4).value = negaraTujuan;
+      r2.getCell(4).value = (tglMulaiStr || '').toUpperCase();
       r2.getCell(4).font = { name: 'Calibri', size: 10, bold: true };
       r2.getCell(4).alignment = { vertical: 'middle', horizontal: 'left' };
-      worksheet.mergeCells(`D${r2.number}:H${r2.number}`);
+      worksheet.mergeCells(`D${r2.number}:E${r2.number}`);
 
-      // Row 3: DALAM RANGKA SURVEY KLAS : [KAPAL]
+      // Row 3: DAFTAR BIAYA PERJALANAN DINAS KE : [NEGARA]
       const r3 = worksheet.addRow([]);
       r3.height = 19;
-      r3.getCell(1).value = 'DALAM RANGKA SURVEY KLAS';
+      r3.getCell(1).value = 'DAFTAR BIAYA PERJALANAN DINAS KE';
       r3.getCell(1).font = { name: 'Calibri', size: 10, bold: true };
       r3.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
       worksheet.mergeCells(`A${r3.number}:B${r3.number}`);
@@ -232,22 +228,39 @@ export const BiayaPdsLuarNegeriPrintModal = ({
       r3.getCell(3).font = { name: 'Calibri', size: 10, bold: true };
       r3.getCell(3).alignment = { vertical: 'middle', horizontal: 'center' };
 
-      r3.getCell(4).value = namaKapal;
+      r3.getCell(4).value = (negaraTujuan || '').toUpperCase();
       r3.getCell(4).font = { name: 'Calibri', size: 10, bold: true };
       r3.getCell(4).alignment = { vertical: 'middle', horizontal: 'left' };
       worksheet.mergeCells(`D${r3.number}:H${r3.number}`);
 
-      // Row 4: SESUAI DAFTAR DAN KUITANSI TERLAMPIR
+      // Row 4: DALAM RANGKA SURVEY KLAS : [KAPAL]
       const r4 = worksheet.addRow([]);
       r4.height = 19;
-      r4.getCell(1).value = 'SESUAI DAFTAR DAN KUITANSI TERLAMPIR';
+      r4.getCell(1).value = 'DALAM RANGKA SURVEY KLAS';
       r4.getCell(1).font = { name: 'Calibri', size: 10, bold: true };
       r4.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
-      worksheet.mergeCells(`A${r4.number}:H${r4.number}`);
+      worksheet.mergeCells(`A${r4.number}:B${r4.number}`);
 
-      // Row 5: Spacing Row
+      r4.getCell(3).value = ':';
+      r4.getCell(3).font = { name: 'Calibri', size: 10, bold: true };
+      r4.getCell(3).alignment = { vertical: 'middle', horizontal: 'center' };
+
+      r4.getCell(4).value = (namaKapal || '').toUpperCase();
+      r4.getCell(4).font = { name: 'Calibri', size: 10, bold: true };
+      r4.getCell(4).alignment = { vertical: 'middle', horizontal: 'left' };
+      worksheet.mergeCells(`D${r4.number}:H${r4.number}`);
+
+      // Row 5: SESUAI DAFTAR DAN KUITANSI TERLAMPIR
       const r5 = worksheet.addRow([]);
-      r5.height = 10;
+      r5.height = 19;
+      r5.getCell(1).value = 'SESUAI DAFTAR DAN KUITANSI TERLAMPIR';
+      r5.getCell(1).font = { name: 'Calibri', size: 10, bold: true };
+      r5.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
+      worksheet.mergeCells(`A${r5.number}:H${r5.number}`);
+
+      // Row 6: Spacing Row
+      const r6 = worksheet.addRow([]);
+      r6.height = 10;
 
       // ====== 2. HEADER TABEL UTAMA (Rows 6, 7, 8) ======
       const h1 = worksheet.addRow([
@@ -785,25 +798,37 @@ export const BiayaPdsLuarNegeriPrintModal = ({
                     <table style={{ width: 'auto', borderCollapse: 'collapse', lineHeight: '1.5' }}>
                       <tbody>
                         <tr>
-                          <td colSpan={3} style={{ whiteSpace: 'nowrap', paddingBottom: '0.15rem' }}>
-                            LAMPIRAN SURAT TUGAS No. {nomorPrefix || 'A 0'} &nbsp;&nbsp; {nomorSuffix}
+                          <td colSpan={3} style={{ whiteSpace: 'nowrap', paddingBottom: '0.15rem', fontWeight: 'bold' }}>
+                            LAMPIRAN SURAT TUGAS
                           </td>
-                          <td style={{ textAlign: 'right', paddingLeft: '3rem' }}>
-                            {tglMulaiStr}
+                        </tr>
+                        <tr>
+                          <td style={{ whiteSpace: 'nowrap', paddingRight: '0.75rem' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                              <span>No.&nbsp;</span>
+                              <span style={{ display: 'inline-block', textAlign: 'left', minWidth: isDefaultA0 ? '50px' : 'auto' }}>
+                                {nomorPrefix || (isDefaultA0 ? 'A 0' : <span>&nbsp;</span>)}
+                              </span>
+                              <span style={{ paddingLeft: isDefaultA0 ? '1.5rem' : '0.35rem' }}>{nomorSuffix}</span>
+                            </span>
                           </td>
+                          <td style={{ width: '15px', textAlign: 'center' }}>:</td>
+                          <td style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>{tglMulaiStr}</td>
                         </tr>
                         <tr>
                           <td style={{ whiteSpace: 'nowrap', paddingRight: '0.75rem' }}>DAFTAR BIAYA PERJALANAN DINAS KE</td>
                           <td style={{ textAlign: 'center', width: '15px' }}>:</td>
-                          <td colSpan={2} style={{ fontWeight: 'bold' }}>{negaraTujuan}</td>
+                          <td style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>{negaraTujuan}</td>
                         </tr>
                         <tr>
                           <td style={{ whiteSpace: 'nowrap', paddingRight: '0.75rem' }}>DALAM RANGKA SURVEY KLAS</td>
-                          <td style={{ textAlign: 'center' }}>:</td>
-                          <td colSpan={2} style={{ fontWeight: 'bold' }}>{namaKapal}</td>
+                          <td style={{ textAlign: 'center', width: '15px' }}>:</td>
+                          <td style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>{namaKapal}</td>
                         </tr>
                         <tr>
-                          <td colSpan={4} style={{ paddingTop: '0.35rem', letterSpacing: '0.01em' }}>SESUAI DAFTAR DAN KUITANSI TERLAMPIR</td>
+                          <td colSpan={3} style={{ paddingTop: '0.35rem', letterSpacing: '0.01em', fontWeight: 'bold' }}>
+                            SESUAI DAFTAR DAN KUITANSI TERLAMPIR
+                          </td>
                         </tr>
                       </tbody>
                     </table>
